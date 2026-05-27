@@ -35,7 +35,7 @@
     <button onclick="navegar('gps')" class="nav-btn" style="width: 100%; text-align: left; padding: 8px;">
       📍 Rastreo GPS
     </button>
-	       
+	<button onclick="mostrarSeccion('repartidores', this)" class="nav-btn w-full text-left px-4 py-3 rounded transition hover:bg-blue-800">🛵 Repartidores</button>       
   </div>
 
     
@@ -88,6 +88,30 @@ mostrarSeccion
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-sm"><h3 class="text-lg font-bold text-gray-700 mb-4">Lista de Productos</h3><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2 border">Nombre</th><th class="p-2 border">Tipo</th><th class="p-2 border">Costo</th><th class="p-2 border">Venta Base</th><th class="p-2 border text-center">Acciones</th></tr></thead><tbody id="tablaProductos"></tbody></table></div>
             </div>
+
+			<!-- SECCIÓN: REPARTIDORES -->
+<div id="view-repartidores" class="view-section hidden">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6">🛵 Gestión de Repartidores</h2>
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
+        <h3 class="text-lg font-bold text-gray-700 mb-4">Agregar / Editar Repartidor</h3>
+        <input type="hidden" id="repIdEditando">
+        <div class="flex gap-4 items-end">
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700">Nombre del Repartidor *</label>
+                <input type="text" id="repNombre" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm uppercase" placeholder="Ej: JUAN PEREZ">
+            </div>
+            <button onclick="guardarRepartidor()" id="btnGuardarRep" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 font-bold cursor-pointer">Guardar</button>
+            <button onclick="cancelarEdicionRep()" id="btnCancelarRep" class="hidden bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 font-bold cursor-pointer">Cancelar</button>
+        </div>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h3 class="text-lg font-bold text-gray-700 mb-4">Lista de Repartidores</h3>
+        <table class="w-full text-left border-collapse">
+            <thead><tr class="bg-gray-200"><th class="p-2 border">ID</th><th class="p-2 border">Nombre</th><th class="p-2 border text-center">Acciones</th></tr></thead>
+            <tbody id="tablaRepartidores"></tbody>
+        </table>
+    </div>
+</div>
 
             <!-- SECCIÓN: CLIENTES V12 -->
             <div id="view-clientes" class="view-section hidden">
@@ -163,7 +187,7 @@ mostrarSeccion
                 </div>
             </div>
 
-
+		
             <!-- PROVEEDORES Y REMITOS (MODIFICADO) -->
             <div id="view-proveedores" class="view-section hidden">
                 <h2 class="text-2xl font-semibold text-gray-800 mb-6">🚚 Proveedores y Remitos</h2>
@@ -1017,6 +1041,8 @@ mostrarSeccion
     if(nombreSeccion === 'gps') { 
         cargarRepartidores(); 
     }
+	if(nombreSeccion === 'repartidores') { loadRepartidoresWeb(); }
+		
     if(nombreSeccion === 'finanzas') { 
         loadFinanzas(); 
         mostrarTabFinanzas('cobrar'); 
@@ -3322,7 +3348,71 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     MarketingAI.init();
 });
+// ==========================================
+// LÓGICA DE REPARTIDORES
+// ==========================================
+async function loadRepartidoresWeb() {
+    if(!db) return;
+    const { data, error } = await db.from("repartidores").select("*").order("id", { ascending: true });
+    if (error) { alert("Error al cargar repartidores: " + error.message); return; }
+    repartidoresCache = data || [];
+    renderTablaRepartidores();
+}
 
+function renderTablaRepartidores() {
+    var tbody = document.getElementById("tablaRepartidores");
+    tbody.innerHTML = "";
+    if (repartidoresCache.length > 0) {
+        repartidoresCache.forEach(function(r) {
+            var tr = document.createElement("tr");
+            tr.innerHTML = `<td class="p-2 border">${r.id}</td><td class="p-2 border font-bold">${r.nombre}</td>
+            <td class="p-2 border text-center">
+                <button onclick="editarRepartidorWeb(${r.id}, '${r.nombre}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs mr-1">Editar</button>
+                <button onclick="eliminarRepartidor(${r.id})" class="bg-red-600 text-white px-2 py-1 rounded text-xs">Eliminar</button>
+            </td>`;
+            tbody.appendChild(tr);
+        });
+    } else {
+        tbody.innerHTML = "<tr><td colspan='3' class='p-4 text-center text-gray-500'>No hay repartidores.</td></tr>";
+    }
+}
+
+async function guardarRepartidor() {
+    var idEditando = document.getElementById("repIdEditando").value;
+    var nombre = document.getElementById("repNombre").value.toUpperCase();
+    if (!nombre) { alert("Ingresa un nombre."); return; }
+    
+    var resultado;
+    if (idEditando) {
+        resultado = await db.from("repartidores").update({ nombre: nombre }).eq("id", idEditando);
+    } else {
+        resultado = await db.from("repartidores").insert([{ nombre: nombre }]);
+    }
+    
+    if (resultado.error) { alert("Error: " + resultado.error.message); } 
+    else { alert("¡Guardado!"); cancelarEdicionRep(); loadRepartidoresWeb(); cargarRepartidores(); } // Also refresh GPS dropdown
+}
+
+function editarRepartidorWeb(id, nombre) {
+    document.getElementById("repIdEditando").value = id;
+    document.getElementById("repNombre").value = nombre;
+    document.getElementById("btnGuardarRep").innerText = "Actualizar";
+    document.getElementById("btnCancelarRep").classList.remove("hidden");
+}
+
+function cancelarEdicionRep() {
+    document.getElementById("repIdEditando").value = "";
+    document.getElementById("repNombre").value = "";
+    document.getElementById("btnGuardarRep").innerText = "Guardar";
+    document.getElementById("btnCancelarRep").classList.add("hidden");
+}
+
+async function eliminarRepartidor(id) {
+    if (!confirm("¿Eliminar repartidor? Si tiene ventas o jornadas asociadas, la base de datos no dejará borrarlo.")) return;
+    const { error } = await db.from("repartidores").delete().eq("id", id);
+    if (error) { alert("Error al eliminar: " + error.message + "\n(Seguramente tiene ventas o jornadas asociadas)"); } 
+    else { loadRepartidoresWeb(); cargarRepartidores(); } // Refresh GPS dropdown too
+}
     </script>  
 </body>
 </html>
