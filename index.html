@@ -2733,7 +2733,8 @@ async function cargarRepartidores() {
 
 
 // --- CAMBIO DE REPARTIDOR SELECCIONADO ---
-function cambiarRepartidor() {
+
+async function cambiarRepartidor() {
     var newId = document.getElementById("selRepartidor").value;
     if (newId === currentRepartidorId) return;
     
@@ -2748,9 +2749,25 @@ function cambiarRepartidor() {
     if(gpsRealtimeChannel) db.removeChannel(gpsRealtimeChannel);
     
     if(currentRepartidorId) {
+        // 🔥 NUEVO: Buscar la última ubicación conocida al seleccionar
+        const { data, error } = await db
+            .from('gps_locations')
+            .select('*')
+            .eq('device_id', currentRepartidorId)
+            .order('recorded_at', { ascending: false })
+            .limit(1);
+
+        // Si hay datos previos, dibujar el camión ahí inmediatamente
+        if (!error && data && data.length > 0) {
+            moverVehiculo(data[0]);
+        }
+
+        // Luego, empezar a escuchar en vivo
         escucharGPSRealtime(currentRepartidorId);
     }
 }
+		
+
 
 // --- GEOCODIFICACIÓN: BUSCAR DIRECCIÓN ---
 
