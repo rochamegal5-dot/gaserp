@@ -2617,6 +2617,7 @@ mostrarSeccion
 		// ==========================================
 // FUNCIÓN MAESTRA DE NAVEGACIÓN
 // ==========================================
+
 function navegar(seccion) {
     var secciones = document.getElementsByClassName('view-section');
     for (var i = 0; i < secciones.length; i++) {
@@ -2626,7 +2627,7 @@ function navegar(seccion) {
     var vista = document.getElementById('view-' + seccion);
     if (vista) vista.classList.remove('hidden');
 
-    // ✅ Actualizar sidebar
+    // Actualizar sidebar
     var botones = document.getElementsByClassName("nav-btn");
     for (var j = 0; j < botones.length; j++) { 
         botones[j].classList.remove("bg-blue-800", "font-bold"); 
@@ -2635,6 +2636,9 @@ function navegar(seccion) {
     if (seccion === 'gps') {
         // Activar el botón de GPS
         document.querySelector('[onclick*="navegar(\'gps\')"]').classList.add("bg-blue-800", "font-bold");
+        
+        // 🔥 SOLUCIÓN: Cargar los repartidores apenas entramos a la sección GPS
+        cargarRepartidores(); 
     }
 
     if (seccion === 'gps') {
@@ -2646,7 +2650,7 @@ function navegar(seccion) {
     }
 }
 
-
+	
 
 // ==========================================
 // MÓDULO GPS EN VIVO - CÓDIGO DEFINITIVO
