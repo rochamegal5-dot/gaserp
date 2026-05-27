@@ -2617,40 +2617,35 @@ mostrarSeccion
 		// ==========================================
 // FUNCIÓN MAESTRA DE NAVEGACIÓN
 // ==========================================
-
 function navegar(seccion) {
     var secciones = document.getElementsByClassName('view-section');
-    for (var i = 0; i < secciones.length; i++) {
-        secciones[i].classList.add('hidden');
+    for (var i = 0; i < secciones.length; i++) { 
+        secciones[i].classList.add('hidden'); 
     }
     
     var vista = document.getElementById('view-' + seccion);
     if (vista) vista.classList.remove('hidden');
 
-    // Actualizar sidebar
     var botones = document.getElementsByClassName("nav-btn");
     for (var j = 0; j < botones.length; j++) { 
         botones[j].classList.remove("bg-blue-800", "font-bold"); 
     }
 
     if (seccion === 'gps') {
-        // Activar el botón de GPS
         document.querySelector('[onclick*="navegar(\'gps\')"]').classList.add("bg-blue-800", "font-bold");
-        
-        // 🔥 SOLUCIÓN: Cargar los repartidores apenas entramos a la sección GPS
         cargarRepartidores(); 
-    }
-
-    if (seccion === 'gps') {
+        
+        // 🔥 INICIALIZAR MAPA AL ENTRAR
         setTimeout(function() {
-            if (typeof gpsMap !== 'undefined' && gpsMap !== null) {
-                gpsMap.invalidateSize();
+            if (!gpsMap && document.getElementById("gpsMap")) {
+                initGPSMap(); 
+            } else if (gpsMap) {
+                gpsMap.invalidateSize(); 
             }
-        }, 200); 
+        }, 300); 
     }
 }
-
-	
+		
 
 // ==========================================
 // MÓDULO GPS EN VIVO - CÓDIGO DEFINITIVO
@@ -2749,7 +2744,7 @@ async function cambiarRepartidor() {
     if(gpsRealtimeChannel) db.removeChannel(gpsRealtimeChannel);
     
     if(currentRepartidorId) {
-        // 🔥 NUEVO: Buscar la última ubicación conocida al seleccionar
+        // 🔥 CONFIRMACIÓN: Buscar la última ubicación y centrar el mapa ahí
         const { data, error } = await db
             .from('gps_locations')
             .select('*')
@@ -2757,16 +2752,22 @@ async function cambiarRepartidor() {
             .order('recorded_at', { ascending: false })
             .limit(1);
 
-        // Si hay datos previos, dibujar el camión ahí inmediatamente
         if (!error && data && data.length > 0) {
+            // Si hay datos previos, dibujar el camión y hacer zoom
             moverVehiculo(data[0]);
+            gpsMap.setView([parseFloat(data[0].lat), parseFloat(data[0].lng)], 15);
+        } else {
+            // Si no hay datos, mostrar un aviso
+            alert("Sin datos de GPS aún. Abre la app en el celular con este repartidor y dale permisos de ubicación.");
         }
 
-        // Luego, empezar a escuchar en vivo
+        // Empezar a escuchar en vivo
         escucharGPSRealtime(currentRepartidorId);
     }
 }
+
 		
+	
 
 
 // --- GEOCODIFICACIÓN: BUSCAR DIRECCIÓN ---
