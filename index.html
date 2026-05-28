@@ -25,12 +25,12 @@
             <button onclick="mostrarSeccion('stock', this)" class="nav-btn w-full text-left px-4 py-3 rounded transition hover:bg-blue-800">🗄️ Stock</button>
             <button onclick="mostrarSeccion('ventas', this)" class="nav-btn w-full text-left px-4 py-3 rounded transition hover:bg-blue-800">💰 Ventas</button>
             <button onclick="mostrarSeccion('finanzas', this)" class="nav-btn w-full text-left px-4 py-3 rounded transition hover:bg-blue-800">🏦 Finanzas</button>
-            <div style="display: flex; flex-direction: column; width: 100%; margin-top: 10px;">
-                <button onclick="mostrarSeccion('marketing', this)" class="nav-btn" style="width: 100%; text-align: left; margin-bottom: 8px; padding: 8px;">📣 Marketing IA</button>
-                <button onclick="navegar('gps')" class="nav-btn" style="width: 100%; text-align: left; padding: 8px;">📍 Rastreo GPS</button>
-                <button onclick="mostrarSeccion('repartidores', this)" class="nav-btn w-full text-left px-4 py-3 rounded transition hover:bg-blue-800">🛵 Repartidores</button>       
+         <div style="display: flex; flex-direction: column; width: 100%; margin-top: 10px;">
+            <button onclick="mostrarSeccion('marketing', this)" class="nav-btn" style="width: 100%; text-align: left; margin-bottom: 8px; padding: 8px;">📣 Marketing IA</button>
+            <button onclick="mostrarSeccion('gps', this)" class="nav-btn" style="width: 100%; text-align: left; padding: 8px;">📍 Rastreo GPS</button>
+            <button onclick="mostrarSeccion('repartidores', this)" class="nav-btn w-full text-left px-4 py-3 rounded transition hover:bg-blue-800">🛵 Repartidores</button>       
             </div>
-        </nav>
+            </nav>
         <div class="p-4 border-t border-blue-800 text-sm"><p>Versión 2.0</p></div>
     </aside>
     <div class="flex-1 flex flex-col overflow-y-auto">
@@ -72,9 +72,37 @@
 
             <!-- GPS y MARKETING se omiten en HTML por espacio, van en el JS o los reconstruimos si falta. Avisame si falta algo visual. -->
             <div id="view-gps" class="view-section hidden"><h2 class="text-2xl font-semibold text-gray-800 mb-4">📍 Rastreo Vehicular</h2><div class="flex border-b border-gray-200 mb-4"><button onclick="mostrarTabGPS('vivo')" id="tabGPSVivo" class="py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600">📍 En Vivo</button><button onclick="mostrarTabGPS('historial')" id="tabGPSHist" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent">📊 Historial</button></div><div id="gpsVivo"><div id="gpsAlertBox" class="hidden bg-orange-100 border-l-4 border-orange-500 text-orange-800 p-4 mb-4 rounded shadow-lg" role="alert"><p class="font-bold text-xl" id="gpsAlertText">🚨 Llegando a Punto</p><p class="text-sm" id="gpsAlertSubtext">Zona de influencia.</p></div><div class="grid grid-cols-1 lg:grid-cols-4 gap-6"><div class="lg:col-span-3 bg-white p-2 rounded-lg shadow-sm relative"><div id="gpsMap" style="height: 550px; width: 100%; border-radius: 0.5rem; z-index: 1;"></div><div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-2"><button onclick="toggleSeguir()" id="btnSeguir" class="bg-blue-600 text-white px-3 py-1 rounded shadow-md text-xs font-bold hover:bg-blue-700 cursor-pointer">🧭 Siguiendo</button><div class="bg-white bg-opacity-90 px-4 py-2 rounded-lg shadow-md text-center"><p class="text-xs text-gray-500 font-bold">VELOCIDAD</p><p id="gpsSpeed" class="text-3xl font-black text-blue-700">0</p><p class="text-xs text-gray-500">km/h</p></div><div id="gpsStopBox" class="hidden bg-red-600 text-white px-4 py-2 rounded-lg shadow-md text-center animate-pulse"><p class="text-xs font-bold">DETENIDO</p><p id="gpsStopTime" class="text-2xl font-black">00:00</p></div></div></div><div class="space-y-6"><div class="bg-white p-4 rounded-lg shadow-sm"><h3 class="font-bold text-gray-700 mb-2">🚚 Vehículo</h3><select id="selRepartidor" onchange="cambiarRepartidor()" class="w-full border rounded p-2 text-sm"><option value="">-- Cargando... --</option></select></div><div class="bg-white p-4 rounded-lg shadow-sm"><h3 class="font-bold text-gray-700 mb-3">📌 Agregar Punto</h3><div class="space-y-2"><div><label class="block text-xs font-bold text-gray-600">Nombre *</label><input type="text" id="mkNombre" class="mt-1 block w-full px-2 py-1 border rounded text-sm"></div><div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold text-gray-600">Latitud</label><input type="number" id="mkLat" step="any" class="mt-1 block w-full px-2 py-1 border rounded text-sm bg-gray-50"></div><div><label class="block text-xs font-bold text-gray-600">Longitud</label><input type="number" id="mkLng" step="any" class="mt-1 block w-full px-2 py-1 border rounded text-sm bg-gray-50"></div></div><button onclick="guardarMarcador()" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 font-bold text-sm w-full cursor-pointer">Guardar Punto</button></div></div></div></div></div><div id="gpsHistorial" class="hidden"><div id="gpsMapHist" style="height: 400px; width: 100%; border-radius: 0.5rem;" class="bg-gray-200 mb-4"></div><div class="bg-white p-4 rounded-lg shadow-sm"><h3 class="font-bold text-gray-700 mb-4 text-center text-lg">Control de Puntos - <span id="histFecha"></span></h3><table class="w-full text-left border-collapse text-sm"><thead><tr class="bg-gray-200"><th class="p-2 border">Punto</th><th class="p-2 border text-center">¿Visitado?</th><th class="p-2 border text-center">Tiempo</th><th class="p-2 border text-center">Estado</th></tr></thead><tbody id="tablaHistorialGPS"></tbody></table></div></div></div>
+                    <!-- INICIO SECCIÓN FINANZAS -->
+            <div id="view-finanzas" class="view-section hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">🏦 Finanzas y Contabilidad</h2>
+                <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
+                    <button onclick="mostrarTabFinanzas('cobrar')" id="tabCobrar" class="py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">💵 Cuentas por Cobrar</button>
+                    <button onclick="mostrarTabFinanzas('pagar')" id="tabPagar" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap">🛒 Cuentas por Pagar</button>
+                    <button onclick="mostrarTabFinanzas('caja')" id="tabCaja" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap">💶 Caja del Día</button>
+                </div>
+                <div id="finanzasCobrar" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm"><h3 class="text-lg font-bold text-gray-700 mb-4">👥 Clientes con Saldo</h3><input type="text" id="busquedaDeudor" class="block w-full px-3 py-2 border rounded-md shadow-sm mb-4" placeholder="Buscar cliente..." oninput="filtrarDeudores()"><div class="space-y-2 max-h-[500px] overflow-y-auto" id="listaDeudores"></div></div>
+                    <div class="lg:col-span-2 space-y-6">
+                        <div id="infoDeudorSeleccionado" class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-red-500 hidden"><div class="flex justify-between items-center"><div><h3 class="text-xl font-bold text-gray-800" id="deudorNombre">-</h3><p class="text-sm text-gray-500" id="deudorTelefono">-</p></div><div class="text-right"><p class="text-sm text-gray-600 uppercase font-bold">Saldo Adeudado</p><p class="text-3xl font-extrabold text-red-600" id="deudorSaldo">$0</p></div></div></div>
+                        <div id="bloqueCobroCtaCte" class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500 hidden"><h3 class="text-lg font-bold text-green-800 mb-4">💰 Registrar Cobro</h3><div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end"><div><label class="block text-sm font-medium text-gray-700">Monto ($)</label><input type="number" id="pagoMonto" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm text-center font-bold text-lg" value="0" min="0"></div><div><label class="block text-sm font-medium text-gray-700">Forma de Pago</label><select id="pagoForma" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white"><option value="efectivo">💵 Efectivo</option><option value="transferencia">📱 Transferencia</option></select></div><div><label class="block text-sm font-medium text-gray-700">Detalle</label><input type="text" id="pagoDetalle" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm" placeholder="Opcional"></div><button onclick="registrarPagoCtaCte()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 font-bold cursor-pointer w-full text-lg shadow-md">✅ Cobrar</button></div></div>
+                    </div>
+                </div>
+                <div id="finanzasPagar" class="hidden"><h3 class="text-lg font-bold text-gray-700 mb-4">🚚 Remitos Pendientes de Pago</h3><div class="space-y-2 max-h-[500px] overflow-y-auto" id="listaRemitosPendientes"></div></div>
+                <div id="finanzasCaja" class="hidden"><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6"><div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500"><h3 class="text-sm font-bold text-gray-500 uppercase">Ingresos de Hoy</h3><p id="cajaIngresos" class="text-3xl font-extrabold text-green-600 mt-2">$0</p></div><div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-red-500"><h3 class="text-sm font-bold text-gray-500 uppercase">Egresos de Hoy</h3><p id="cajaEgresos" class="text-3xl font-extrabold text-red-600 mt-2">$0</p></div><div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500"><h3 class="text-sm font-bold text-gray-500 uppercase">Margen Bruto</h3><p id="cajaSaldo" class="text-3xl font-extrabold text-blue-600 mt-2">$0</p></div></div></div>
+            </div>
 
+            <!-- INICIO SECCIÓN MARKETING -->
+            <div id="view-marketing" class="view-section hidden bg-gray-900 text-white font-sans py-8 min-h-screen">
+                <div class="container mx-auto px-4">
+                    <div class="mb-6"><button onclick="mostrarSeccion('resumen', this)" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm transition duration-300"><i class="fas fa-arrow-left"></i> Volver al Inicio</button></div>
+                    <div class="flex justify-between items-center mb-8"><h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600"><i class="fas fa-robot"></i> Marketing IA Autónomo</h1></div>
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8 border border-gray-700"><h2 class="text-xl font-semibold mb-4">Crear Nueva Campaña</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm text-gray-400 mb-1">Producto/Servicio</label><input type="text" id="mkt-productName" class="w-full bg-gray-700 p-2 rounded outline-none focus:ring-2 focus:ring-purple-500" placeholder="Ej: Garrafa 13kg"></div><div><label class="block text-sm text-gray-400 mb-1">Objetivo</label><input type="text" id="mkt-campaignGoal" class="w-full bg-gray-700 p-2 rounded outline-none focus:ring-2 focus:ring-purple-500" placeholder="Ej: Venta flash"></div></div><button onclick="MarketingAI.generateCampaign()" id="mkt-btnGenerate" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 py-3 rounded font-bold transition duration-300">Generar Spot y Programar con IA</button></div>
+                    <div class="bg-gray-800 p-6 rounded-lg border border-gray-700 shadow-lg"><h3 class="text-white font-bold text-lg mb-4 flex items-center gap-2"><i class="fab fa-whatsapp text-green-500 text-2xl"></i> Envío Directo por WhatsApp</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><div class="mb-4"><label class="text-gray-300 text-sm font-bold block mb-2">Destinatario:</label><select id="mkt-wa-target" class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 outline-none"><option value="all">📢 Todos los Clientes</option><option value="particular">👤 Solo Particulares</option><option value="deudor">💰 Clientes con Deuda</option></select></div><div class="mb-4"><label class="text-gray-300 text-sm font-bold block mb-2">Mensaje:</label><textarea id="mkt-wa-message" rows="4" class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 outline-none" placeholder="¡Hola {nombre}! Promo..."></textarea></div></div><div class="flex flex-col justify-between"><div class="bg-gray-900 p-4 rounded-lg h-32 overflow-y-auto text-sm text-green-100 font-mono" id="mkt-wa-preview">Vista previa...</div><div class="mt-4"><button onclick="iniciarEnvioWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded font-bold transition text-lg shadow-lg w-full">🚀 Iniciar Envío Masivo</button></div></div></div></div>
+                </div>
+            </div>
         </main>
     </div>
+    
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -90,18 +118,25 @@
             } else { alert("Error: Supabase no cargó."); }
         }
         window.onload = function() { inicializarSupabase(); };
-
         function mostrarSeccion(nombreSeccion, botonClickeado) {
             var secciones = document.getElementsByClassName("view-section"); for(var i=0; i<secciones.length; i++) { secciones[i].classList.add("hidden"); }
             document.getElementById("view-" + nombreSeccion).classList.remove("hidden");
             var botones = document.getElementsByClassName("nav-btn"); for(var j=0; j<botones.length; j++) { botones[j].classList.remove("bg-blue-800", "font-bold"); }
             botonClickeado.classList.add("bg-blue-800", "font-bold");
-            if(nombreSeccion === 'stock') loadStock(); if(nombreSeccion === 'ventas') { loadVentasHoy(); cargarSelectVentas(); loadPrecios(); } if(nombreSeccion === 'repartidores') loadRepartidoresWeb();
+            if(nombreSeccion === 'stock') loadStock(); 
+            if(nombreSeccion === 'ventas') { loadVentasHoy(); cargarSelectVentas(); loadPrecios(); } 
+            if(nombreSeccion === 'repartidores') loadRepartidoresWeb();
             if(nombreSeccion === 'resumen') { loadStats(); setTimeout(function() { if(dashMap) dashMap.invalidateSize(); }, 200); }
+            if(nombreSeccion === 'finanzas') { loadFinanzas(); mostrarTabFinanzas('cobrar'); }
+            if(nombreSeccion === 'marketing') { if(typeof MarketingAI !== 'undefined') MarketingAI.init(); }
+            if(nombreSeccion === 'gps') { 
+                cargarRepartidoresGPS(); 
+                setTimeout(function() { if (!gpsMap && document.getElementById("gpsMap")) { initGPSMap(); } else if (gpsMap) { gpsMap.invalidateSize(); } }, 300); 
+            }
         }
-                var dashPolylines = {}; // Guarda las líneas de recorrido en el panel principal
-        var dashMarkers = {};   // Guarda los camiones del panel principal
-
+//
+        
+      
         function initDashboardMap() { 
             if(document.getElementById("dashMap") && !dashMap) { 
                 dashMap = L.map('dashMap').setView([-34.4833, -54.3333], 13); 
