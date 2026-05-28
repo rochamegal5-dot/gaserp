@@ -218,10 +218,48 @@
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-sm"><h3 class="text-lg font-bold text-gray-700 mb-4">Historial de Hoy</h3><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2 border">Hora</th><th class="p-2 border">Origen</th><th class="p-2 border">Cliente</th><th class="p-2 border">Producto</th><th class="p-2 border text-center">Llenas</th><th class="p-2 border text-center">Vacías</th><th class="p-2 border text-center">Def.</th><th class="p-2 border">Pago</th><th class="p-2 border text-right">Total</th></tr></thead><tbody id="tablaVentasHoy"></tbody></table></div>
             </div>
-         
-          
-            <div id="view-repartidores" class="view-section hidden"><h2 class="text-2xl font-semibold text-gray-800 mb-6">🛵 Gestión de Repartidores</h2><div class="bg-white p-6 rounded-lg shadow-sm mb-8"><input type="hidden" id="repIdEditando"><div class="flex gap-4 items-end"><div class="flex-1"><label class="block text-sm font-medium text-gray-700">Nombre del Repartidor *</label><input type="text" id="repNombre" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm uppercase" placeholder="Ej: JUAN PEREZ"></div><button onclick="guardarRepartidor()" id="btnGuardarRep" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 font-bold cursor-pointer">Guardar</button><button onclick="cancelarEdicionRep()" id="btnCancelarRep" class="hidden bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 font-bold cursor-pointer">Cancelar</button></div></div><table class="w-full text-left border-collapse bg-white rounded-lg shadow-sm"><thead><tr class="bg-gray-200"><th class="p-2 border">ID</th><th class="p-2 border">Nombre</th><th class="p-2 border text-center">Acciones</th></tr></thead><tbody id="tablaRepartidores"></tbody></table></div>
 
+            <div id="view-repartidores" class="view-section hidden">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6">🛵 Gestión de Repartidores</h2>
+    
+    <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
+        <input type="hidden" id="repIdEditando">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Nombre del Repartidor *</label>
+                <input type="text" id="repNombre" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm uppercase" placeholder="Ej: JUAN PEREZ">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Teléfono</label>
+                <input type="text" id="repTelefono" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm" placeholder="Ej: 099123456">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Vehículo / Patente</label>
+                <input type="text" id="repVehiculo" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm uppercase" placeholder="Ej: MOTO ABC 123">
+            </div>
+        </div>
+        <div class="flex gap-4 mt-4">
+            <button onclick="guardarRepartidor()" id="btnGuardarRep" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 font-bold cursor-pointer">Guardar Repartidor</button>
+            <button onclick="cancelarEdicionRep()" id="btnCancelarRep" class="hidden bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 font-bold cursor-pointer">Cancelar</button>
+        </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h3 class="text-lg font-bold text-gray-700 mb-4">Lista de Repartidores</h3>
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-2 border">Nombre</th>
+                    <th class="p-2 border">Teléfono</th>
+                    <th class="p-2 border">Vehículo</th>
+                    <th class="p-2 border text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tablaRepartidores"></tbody>
+        </table>
+    </div>
+</div>
+       
             <!-- GPS y MARKETING se omiten en HTML por espacio, van en el JS o los reconstruimos si falta. Avisame si falta algo visual. -->
             <div id="view-gps" class="view-section hidden"><h2 class="text-2xl font-semibold text-gray-800 mb-4">📍 Rastreo Vehicular</h2><div class="flex border-b border-gray-200 mb-4"><button onclick="mostrarTabGPS('vivo')" id="tabGPSVivo" class="py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600">📍 En Vivo</button><button onclick="mostrarTabGPS('historial')" id="tabGPSHist" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent">📊 Historial</button></div><div id="gpsVivo"><div id="gpsAlertBox" class="hidden bg-orange-100 border-l-4 border-orange-500 text-orange-800 p-4 mb-4 rounded shadow-lg" role="alert"><p class="font-bold text-xl" id="gpsAlertText">🚨 Llegando a Punto</p><p class="text-sm" id="gpsAlertSubtext">Zona de influencia.</p></div><div class="grid grid-cols-1 lg:grid-cols-4 gap-6"><div class="lg:col-span-3 bg-white p-2 rounded-lg shadow-sm relative"><div id="gpsMap" style="height: 550px; width: 100%; border-radius: 0.5rem; z-index: 1;"></div><div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-2"><button onclick="toggleSeguir()" id="btnSeguir" class="bg-blue-600 text-white px-3 py-1 rounded shadow-md text-xs font-bold hover:bg-blue-700 cursor-pointer">🧭 Siguiendo</button><div class="bg-white bg-opacity-90 px-4 py-2 rounded-lg shadow-md text-center"><p class="text-xs text-gray-500 font-bold">VELOCIDAD</p><p id="gpsSpeed" class="text-3xl font-black text-blue-700">0</p><p class="text-xs text-gray-500">km/h</p></div><div id="gpsStopBox" class="hidden bg-red-600 text-white px-4 py-2 rounded-lg shadow-md text-center animate-pulse"><p class="text-xs font-bold">DETENIDO</p><p id="gpsStopTime" class="text-2xl font-black">00:00</p></div></div></div><div class="space-y-6"><div class="bg-white p-4 rounded-lg shadow-sm"><h3 class="font-bold text-gray-700 mb-2">🚚 Vehículo</h3><select id="selRepartidor" onchange="cambiarRepartidor()" class="w-full border rounded p-2 text-sm"><option value="">-- Cargando... --</option></select></div><div class="bg-white p-4 rounded-lg shadow-sm"><h3 class="font-bold text-gray-700 mb-3">📌 Agregar Punto</h3><div class="space-y-2"><div><label class="block text-xs font-bold text-gray-600">Nombre *</label><input type="text" id="mkNombre" class="mt-1 block w-full px-2 py-1 border rounded text-sm"></div><div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold text-gray-600">Latitud</label><input type="number" id="mkLat" step="any" class="mt-1 block w-full px-2 py-1 border rounded text-sm bg-gray-50"></div><div><label class="block text-xs font-bold text-gray-600">Longitud</label><input type="number" id="mkLng" step="any" class="mt-1 block w-full px-2 py-1 border rounded text-sm bg-gray-50"></div></div><button onclick="guardarMarcador()" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 font-bold text-sm w-full cursor-pointer">Guardar Punto</button></div></div></div></div></div><div id="gpsHistorial" class="hidden"><div id="gpsMapHist" style="height: 400px; width: 100%; border-radius: 0.5rem;" class="bg-gray-200 mb-4"></div><div class="bg-white p-4 rounded-lg shadow-sm"><h3 class="font-bold text-gray-700 mb-4 text-center text-lg">Control de Puntos - <span id="histFecha"></span></h3><table class="w-full text-left border-collapse text-sm"><thead><tr class="bg-gray-200"><th class="p-2 border">Punto</th><th class="p-2 border text-center">¿Visitado?</th><th class="p-2 border text-center">Tiempo</th><th class="p-2 border text-center">Estado</th></tr></thead><tbody id="tablaHistorialGPS"></tbody></table></div></div></div>
                   
@@ -1087,12 +1125,106 @@ async function descontarGasTuboAutomatico(kilosADescontar) {  // ✅ español
                 loadVentasHoy(); // Refresca la grilla y las cajas automáticamente
             }).subscribe();
         }
-     
-        async function loadRepartidoresWeb() { if(!db)return; const{data}=await db.from("repartidores").select("*").order("id"); repartidoresCache=data||[]; var tb=document.getElementById("tablaRepartidores"); tb.innerHTML=""; repartidoresCache.forEach(r => { tb.innerHTML+=`<tr><td class='p-2 border'>${r.id}</td><td class='p-2 border font-bold'>${r.nombre}</td><td class='p-2 border text-center'><button onclick='eliminarRepartidor(${r.id})' class='bg-red-600 text-white px-2 py-1 rounded text-xs'>Del</button></td></tr>`; }); }
-        async function guardarRepartidor() { if(!db)return; var n=document.getElementById("repNombre").value.toUpperCase(); if(!n){alert("Ingresa nombre");return;} await db.from("repartidores").insert([{nombre:n}]); alert("¡Guardado!"); document.getElementById("repNombre").value=""; loadRepartidoresWeb(); }
-        async function eliminarRepartidor(id) { if(!confirm("¿Eliminar?"))return; await db.from("repartidores").delete().eq("id",id); loadRepartidoresWeb(); }
 
-        // CONTINÚA EN LA PARTE 2...
+        // ==========================================
+// MÓDULO REPARTIDORES (CRUD COMPLETO)
+// ==========================================
+
+async function loadRepartidoresWeb() { 
+    if(!db) return; 
+    const { data } = await db.from("repartidores").select("*").order("id"); 
+    repartidoresCache = data || []; 
+    var tb = document.getElementById("tablaRepartidores"); 
+    tb.innerHTML = ""; 
+    
+    if (repartidoresCache.length === 0) {
+        tb.innerHTML = "<tr><td colspan='4' class='p-4 text-center text-gray-500'>No hay repartidores cargados.</td></tr>";
+        return;
+    }
+
+    repartidoresCache.forEach(r => { 
+        tb.innerHTML += `
+            <tr class="hover:bg-gray-50 border-b">
+                <td class='p-2 border font-bold'>${r.nombre}</td>
+                <td class='p-2 border'>${r.telefono || '-'}</td>
+                <td class='p-2 border'>${r.vehiculo || '-'}</td>
+                <td class='p-2 border text-center'>
+                    <button onclick='editarRepartidor(${r.id})' class='bg-yellow-500 text-white px-2 py-1 rounded text-xs mr-1 cursor-pointer'>✏️ Editar</button>
+                    <button onclick='eliminarRepartidor(${r.id})' class='bg-red-600 text-white px-2 py-1 rounded text-xs cursor-pointer'>🗑️ Eliminar</button>
+                </td>
+            </tr>`; 
+    }); 
+}
+
+async function guardarRepartidor() { 
+    if(!db) return; 
+    var idEditando = document.getElementById("repIdEditando").value;
+    var n = document.getElementById("repNombre").value.toUpperCase(); 
+    var t = document.getElementById("repTelefono").value;
+    var v = document.getElementById("repVehiculo").value.toUpperCase();
+    
+    if(!n){ alert("Ingresa un nombre"); return; }
+    
+    var datos = { nombre: n, telefono: t, vehiculo: v };
+    var resultado;
+
+    if (idEditando) {
+        // Modo Edición
+        resultado = await db.from("repartidores").update(datos).eq("id", idEditando);
+    } else {
+        // Modo Nuevo
+        resultado = await db.from("repartidores").insert([datos]);
+    }
+
+    if (resultado.error) {
+        alert("Error: " + resultado.error.message);
+    } else {
+        alert(idEditando ? "¡Repartidor actualizado!" : "¡Repartidor guardado!");
+        cancelarEdicionRep();
+        loadRepartidoresWeb(); 
+    }
+}
+
+function editarRepartidor(id) {
+    var r = repartidoresCache.find(rep => rep.id === id);
+    if (!r) return;
+    
+    document.getElementById("repIdEditando").value = r.id;
+    document.getElementById("repNombre").value = r.nombre || "";
+    document.getElementById("repTelefono").value = r.telefono || "";
+    document.getElementById("repVehiculo").value = r.vehiculo || "";
+    
+    document.getElementById("btnGuardarRep").innerText = "Actualizar Repartidor";
+    document.getElementById("btnGuardarRep").classList.remove("bg-green-600", "hover:bg-green-700");
+    document.getElementById("btnGuardarRep").classList.add("bg-yellow-500", "hover:bg-yellow-600");
+    document.getElementById("btnCancelarRep").classList.remove("hidden");
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelarEdicionRep() {
+    document.getElementById("repIdEditando").value = "";
+    document.getElementById("repNombre").value = "";
+    document.getElementById("repTelefono").value = "";
+    document.getElementById("repVehiculo").value = "";
+    
+    document.getElementById("btnGuardarRep").innerText = "Guardar Repartidor";
+    document.getElementById("btnGuardarRep").classList.remove("bg-yellow-500", "hover:bg-yellow-600");
+    document.getElementById("btnGuardarRep").classList.add("bg-green-600", "hover:bg-green-700");
+    document.getElementById("btnCancelarRep").classList.add("hidden");
+}
+
+async function eliminarRepartidor(id) { 
+    if(!confirm("¿Estás seguro de eliminar este repartidor?")) return; 
+    const { error } = await db.from("repartidores").delete().eq("id", id);
+    if (error) {
+        alert("Error al eliminar: " + error.message + "\n\n(Seguramente este repartidor ya tiene ventas o rutas asociadas y no se puede borrar)");
+    } else {
+        loadRepartidoresWeb(); 
+    }
+}
+
+        
 
                     // ==========================================
             // MÓDULO GPS EN VIVO - CÓDIGO DEFINITIVO
