@@ -273,15 +273,25 @@
             
 
     <!-- TAB EN VIVO -->
+        <div id="view-gps" class="view-section hidden">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">📍 Rastreo Vehicular</h2>
+    
+    <!-- Pestañas originales -->
+    <div class="flex border-b border-gray-200 mb-4">
+        <button onclick="mostrarTabGPS('vivo')" id="tabGPSVivo" class="py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600">📍 En Vivo</button>
+        <button onclick="mostrarTabGPS('historial')" id="tabGPSHist" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent">📊 Historial del Día</button>
+    </div>
+
+    <!-- TAB EN VIVO -->
     <div id="gpsVivo">
         <div id="gpsAlertBox" class="hidden bg-orange-100 border-l-4 border-orange-500 text-orange-800 p-4 mb-4 rounded shadow-lg" role="alert">
             <p class="font-bold text-xl" id="gpsAlertText">🚨 Alerta</p>
             <p class="text-sm" id="gpsAlertSubtext">Zona de influencia.</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Mapa Vivo (2 columnas) -->
-            <div class="lg:col-span-2 bg-white p-2 rounded-lg shadow-sm relative">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Mapa Vivo (3 columnas) -->
+            <div class="lg:col-span-3 bg-white p-2 rounded-lg shadow-sm relative">
                 <div id="gpsMap" style="height: 550px; width: 100%; border-radius: 0.5rem; z-index: 1;"></div>
                 <div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
                     <div class="bg-white bg-opacity-90 px-4 py-2 rounded-lg shadow-md text-center">
@@ -292,16 +302,25 @@
                 </div>
             </div>
 
-            <!-- Panel Derecho Vivo (1 columna) -->
-            <div class="space-y-6">
+            <!-- Panel Derecho (1 columna) -->
+            <div class="space-y-4">
+                
+                <!-- CUADRO VEHÍCULO (Chico y prolijo) -->
                 <div class="bg-white p-4 rounded-lg shadow-sm">
                     <h3 class="font-bold text-gray-700 mb-2">🚚 Vehículo</h3>
-                    <select id="selRepartidor" onchange="cambiarRepartidor()" class="w-full border rounded p-2 text-sm">
-                        <option value="">-- Seleccione para centrar --</option>
+                    <select id="selRepartidor" class="w-full border rounded p-2 text-sm mb-2" disabled>
+                        <option value="">-- Cargando... --</option>
                     </select>
+                    <div class="flex gap-2">
+                        <button id="btnConfirmarRep" onclick="confirmarRepartidorGPS()" class="flex-1 bg-green-600 text-white px-2 py-1 rounded text-xs font-bold cursor-pointer hidden">✅ Confirmar</button>
+                        <button id="btnModificarRep" onclick="modificarRepartidorGPS()" class="flex-1 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold cursor-pointer">✏️ Cambiar</button>
+                    </div>
+                    <p id="txtNombreRepActivo" class="hidden mt-2 text-center text-green-700 font-extrabold text-sm">🟢 En seguimiento: -</p>
                 </div>
+
+                <!-- Agregar Punto -->
                 <div class="bg-white p-4 rounded-lg shadow-sm">
-                    <h3 class="font-bold text-gray-700 mb-3">📌 Agregar Punto/Comercio</h3>
+                    <h3 class="font-bold text-gray-700 mb-3">📌 Agregar Punto</h3>
                     <div class="space-y-2">
                         <div><label class="block text-xs font-bold text-gray-600">Nombre *</label><input type="text" id="mkNombre" class="mt-1 block w-full px-2 py-1 border rounded text-sm"></div>
                         <div class="grid grid-cols-2 gap-2">
@@ -312,11 +331,17 @@
                     </div>
                 </div>
                 
-                <!-- REGISTRO EN VIVO (NUEVO) -->
-                <div class="bg-white p-4 rounded-lg shadow-sm max-h-72 overflow-y-auto">
-                    <h3 class="font-bold text-gray-700 mb-3 text-sm">📋 Registro en Vivo (Hoy)</h3>
+                <!-- Puntos Registrados -->
+                <div class="bg-white p-4 rounded-lg shadow-sm max-h-40 overflow-y-auto">
+                    <h3 class="font-bold text-gray-700 mb-3 text-sm">Puntos Registrados</h3>
+                    <div id="listaMarcadores" class="space-y-2 text-xs"></div>
+                </div>
+
+                <!-- Registro en Vivo -->
+                <div class="bg-white p-4 rounded-lg shadow-sm max-h-56 overflow-y-auto">
+                    <h3 class="font-bold text-gray-700 mb-3 text-sm">📋 Registro en Vivo</h3>
                     <table class="w-full text-left border-collapse text-xs">
-                        <thead><tr class="bg-gray-100"><th class="p-1 border">Hora</th><th class="p-1 border">Repartidor</th><th class="p-1 border">Evento</th></tr></thead>
+                        <thead><tr class="bg-gray-100"><th class="p-1 border">Hora</th><th class="p-1 border">Evento</th></tr></thead>
                         <tbody id="tablaVivoGPS"></tbody>
                     </table>
                 </div>
@@ -326,21 +351,21 @@
 
     <!-- TAB HISTORIAL -->
     <div id="gpsHistorial" class="hidden">
-        <div class="bg-white p-4 rounded-lg shadow-sm mb-4 flex justify-between items-center">
+        <div class="bg-white p-4 rounded-lg shadow-sm mb-4 flex justify-between items-center no-print">
             <h3 class="font-bold text-gray-700">Recorridos del Día</h3>
-            <button onclick="imprimirHistorialGPS()" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 font-bold text-sm cursor-pointer">🖨️ Imprimir Informe</button>
+            <button onclick="imprimirHistorialGPS()" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 font-bold text-sm cursor-pointer">🖨️ Imprimir</button>
         </div>
-        <div id="gpsMapHist" style="height: 450px; width: 100%; border-radius: 0.5rem;" class="bg-gray-200 mb-4"></div>
+        <div id="gpsMapHist" style="height: 400px; width: 100%; border-radius: 0.5rem;" class="bg-gray-200 mb-4 no-print"></div>
         <div class="bg-white p-4 rounded-lg shadow-sm" id="printableArea">
-            <h3 class="font-bold text-gray-700 mb-4 text-center text-lg">Control de Visitas - <span id="histFecha"></span></h3>
+            <h3 class="font-bold text-gray-700 mb-4 text-center text-lg">Control de Puntos - <span id="histFecha"></span></h3>
             <table class="w-full text-left border-collapse text-sm">
-                <thead><tr class="bg-gray-200"><th class="p-2 border">Repartidor</th><th class="p-2 border">Punto / Comercio</th><th class="p-2 border text-center">¿Visitado?</th><th class="p-2 border text-center">Tiempo Detenido</th><th class="p-2 border text-center">Estado</th></tr></thead>
+                <thead><tr class="bg-gray-200"><th class="p-2 border">Repartidor</th><th class="p-2 border">Punto</th><th class="p-2 border text-center">¿Visitado?</th><th class="p-2 border text-center">Tiempo</th><th class="p-2 border text-center">Estado</th></tr></thead>
                 <tbody id="tablaHistorialGPS"></tbody>
             </table>
         </div>
     </div>
 </div>
-
+   
           
             <!-- INICIO SECCIÓN FINANZAS COMPLETA -->
 <div id="view-finanzas" class="view-section hidden">
@@ -1322,7 +1347,19 @@ var repartidorColores = ['#2563EB', '#DC2626', '#16A34A', '#D97706', '#7C3AED', 
 // Variables de estado en vivo
 var repStates = {}; // { repId: { isStopped: bool, stopStart: Date, currentMarker: id|null, events: [] } }
 
-function mostrarTabGPS(tab) {
+        if (tab === 'vivo') {
+    document.getElementById("gpsVivo").classList.remove("hidden");
+    document.getElementById("tabGPSVivo").className = "py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600";
+    
+    // Inicializar o refrescar mapa
+    if (!gpsMap && document.getElementById("gpsMap")) {
+        initGPSMap();
+    } else if (gpsMap) {
+        setTimeout(function(){ gpsMap.invalidateSize(); }, 300);
+    }
+}
+
+        function mostrarTabGPS(tab) {
     document.getElementById("gpsVivo").classList.add("hidden");
     document.getElementById("gpsHistorial").classList.add("hidden");
     document.getElementById("tabGPSVivo").className = "py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent";
@@ -1331,13 +1368,21 @@ function mostrarTabGPS(tab) {
     if (tab === 'vivo') {
         document.getElementById("gpsVivo").classList.remove("hidden");
         document.getElementById("tabGPSVivo").className = "py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600";
-        if (!gpsMap) initGPSMap();
+        
+        // SOLUCIÓN AL MAPA INVISIBLE/GRISEADO
+        if (!gpsMap) {
+            initGPSMap();
+        } else {
+            // Forzamos a Leaflet a recalcular el tamaño apenas el div se hace visible
+            setTimeout(function(){ gpsMap.invalidateSize(); }, 300);
+        }
     } else {
         document.getElementById("gpsHistorial").classList.remove("hidden");
         document.getElementById("tabGPSHist").className = "py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600";
         loadHistorialGPS();
     }
 }
+       
 async function cargarRepartidoresGPS() {
     if(!db) return;
     const { data, error } = await db.from("repartidores").select("id, nombre").order("nombre");
@@ -1397,17 +1442,24 @@ function modificarRepartidorGPS() {
     document.getElementById("txtNombreRepActivo").classList.add("hidden");
 }
 
-   
-        
-function initGPSMap() {
+
+        function initGPSMap() {
+    if(!document.getElementById("gpsMap")) return;
+    
     gpsMap = L.map('gpsMap').setView([-34.4833, -54.3333], 14);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(gpsMap);
     poisLayer = L.layerGroup().addTo(gpsMap);
+    
     gpsMap.on('click', function(e) {
         document.getElementById("mkLat").value = e.latlng.lat.toFixed(6);
         document.getElementById("mkLng").value = e.latlng.lng.toFixed(6);
     });
-    cargarRepartidoresGPS(); 
+    
+    // FORZAR TAMAÑO DEL MAPA (Soluciona el bug de pantalla gris)
+    setTimeout(function(){ 
+        gpsMap.invalidateSize(); 
+    }, 300);
+    
     loadMarcadores(); 
     escucharGPSRealtimeGlobal();
 }
