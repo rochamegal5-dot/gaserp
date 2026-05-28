@@ -224,25 +224,134 @@
 
             <!-- GPS y MARKETING se omiten en HTML por espacio, van en el JS o los reconstruimos si falta. Avisame si falta algo visual. -->
             <div id="view-gps" class="view-section hidden"><h2 class="text-2xl font-semibold text-gray-800 mb-4">📍 Rastreo Vehicular</h2><div class="flex border-b border-gray-200 mb-4"><button onclick="mostrarTabGPS('vivo')" id="tabGPSVivo" class="py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600">📍 En Vivo</button><button onclick="mostrarTabGPS('historial')" id="tabGPSHist" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent">📊 Historial</button></div><div id="gpsVivo"><div id="gpsAlertBox" class="hidden bg-orange-100 border-l-4 border-orange-500 text-orange-800 p-4 mb-4 rounded shadow-lg" role="alert"><p class="font-bold text-xl" id="gpsAlertText">🚨 Llegando a Punto</p><p class="text-sm" id="gpsAlertSubtext">Zona de influencia.</p></div><div class="grid grid-cols-1 lg:grid-cols-4 gap-6"><div class="lg:col-span-3 bg-white p-2 rounded-lg shadow-sm relative"><div id="gpsMap" style="height: 550px; width: 100%; border-radius: 0.5rem; z-index: 1;"></div><div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-2"><button onclick="toggleSeguir()" id="btnSeguir" class="bg-blue-600 text-white px-3 py-1 rounded shadow-md text-xs font-bold hover:bg-blue-700 cursor-pointer">🧭 Siguiendo</button><div class="bg-white bg-opacity-90 px-4 py-2 rounded-lg shadow-md text-center"><p class="text-xs text-gray-500 font-bold">VELOCIDAD</p><p id="gpsSpeed" class="text-3xl font-black text-blue-700">0</p><p class="text-xs text-gray-500">km/h</p></div><div id="gpsStopBox" class="hidden bg-red-600 text-white px-4 py-2 rounded-lg shadow-md text-center animate-pulse"><p class="text-xs font-bold">DETENIDO</p><p id="gpsStopTime" class="text-2xl font-black">00:00</p></div></div></div><div class="space-y-6"><div class="bg-white p-4 rounded-lg shadow-sm"><h3 class="font-bold text-gray-700 mb-2">🚚 Vehículo</h3><select id="selRepartidor" onchange="cambiarRepartidor()" class="w-full border rounded p-2 text-sm"><option value="">-- Cargando... --</option></select></div><div class="bg-white p-4 rounded-lg shadow-sm"><h3 class="font-bold text-gray-700 mb-3">📌 Agregar Punto</h3><div class="space-y-2"><div><label class="block text-xs font-bold text-gray-600">Nombre *</label><input type="text" id="mkNombre" class="mt-1 block w-full px-2 py-1 border rounded text-sm"></div><div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold text-gray-600">Latitud</label><input type="number" id="mkLat" step="any" class="mt-1 block w-full px-2 py-1 border rounded text-sm bg-gray-50"></div><div><label class="block text-xs font-bold text-gray-600">Longitud</label><input type="number" id="mkLng" step="any" class="mt-1 block w-full px-2 py-1 border rounded text-sm bg-gray-50"></div></div><button onclick="guardarMarcador()" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 font-bold text-sm w-full cursor-pointer">Guardar Punto</button></div></div></div></div></div><div id="gpsHistorial" class="hidden"><div id="gpsMapHist" style="height: 400px; width: 100%; border-radius: 0.5rem;" class="bg-gray-200 mb-4"></div><div class="bg-white p-4 rounded-lg shadow-sm"><h3 class="font-bold text-gray-700 mb-4 text-center text-lg">Control de Puntos - <span id="histFecha"></span></h3><table class="w-full text-left border-collapse text-sm"><thead><tr class="bg-gray-200"><th class="p-2 border">Punto</th><th class="p-2 border text-center">¿Visitado?</th><th class="p-2 border text-center">Tiempo</th><th class="p-2 border text-center">Estado</th></tr></thead><tbody id="tablaHistorialGPS"></tbody></table></div></div></div>
-                    <!-- INICIO SECCIÓN FINANZAS -->
-            <div id="view-finanzas" class="view-section hidden">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-6">🏦 Finanzas y Contabilidad</h2>
-                <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
-                    <button onclick="mostrarTabFinanzas('cobrar')" id="tabCobrar" class="py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">💵 Cuentas por Cobrar</button>
-                    <button onclick="mostrarTabFinanzas('pagar')" id="tabPagar" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap">🛒 Cuentas por Pagar</button>
-                    <button onclick="mostrarTabFinanzas('caja')" id="tabCaja" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap">💶 Caja del Día</button>
+                  
+            <!-- INICIO SECCIÓN FINANZAS COMPLETA -->
+<div id="view-finanzas" class="view-section hidden">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6">🏦 Finanzas y Contabilidad</h2>
+    
+    <!-- Pestañas de Navegación -->
+    <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
+        <button onclick="mostrarTabFinanzas('cobrar')" id="tabCobrar" class="py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">💵 Cuentas por Cobrar</button>
+        <button onclick="mostrarTabFinanzas('pagar')" id="tabPagar" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap">🛒 Cuentas por Pagar</button>
+        <button onclick="mostrarTabFinanzas('caja')" id="tabCaja" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap">💶 Caja del Día</button>
+        <button onclick="mostrarTabFinanzas('historico')" id="tabHistorico" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap">📊 Histórico y Patrimonio</button>
+    </div>
+
+    <!-- TAB 1: CUENTAS POR COBRAR -->
+    <div id="finanzasCobrar" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+            <h3 class="text-lg font-bold text-gray-700 mb-4">👥 Clientes con Saldo</h3>
+            <input type="text" id="busquedaDeudor" class="block w-full px-3 py-2 border rounded-md shadow-sm mb-4" placeholder="Buscar cliente..." oninput="filtrarDeudores()">
+            <div class="space-y-2 max-h-[500px] overflow-y-auto" id="listaDeudores"></div>
+        </div>
+        <div class="lg:col-span-2 space-y-6">
+            <div id="infoDeudorSeleccionado" class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-red-500 hidden">
+                <div class="flex justify-between items-center">
+                    <div><h3 class="text-xl font-bold text-gray-800" id="deudorNombre">-</h3><p class="text-sm text-gray-500" id="deudorTelefono">-</p></div>
+                    <div class="text-right"><p class="text-sm text-gray-600 uppercase font-bold">Saldo Adeudado</p><p class="text-3xl font-extrabold text-red-600" id="deudorSaldo">$0</p></div>
                 </div>
-                <div id="finanzasCobrar" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-lg shadow-sm"><h3 class="text-lg font-bold text-gray-700 mb-4">👥 Clientes con Saldo</h3><input type="text" id="busquedaDeudor" class="block w-full px-3 py-2 border rounded-md shadow-sm mb-4" placeholder="Buscar cliente..." oninput="filtrarDeudores()"><div class="space-y-2 max-h-[500px] overflow-y-auto" id="listaDeudores"></div></div>
-                    <div class="lg:col-span-2 space-y-6">
-                        <div id="infoDeudorSeleccionado" class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-red-500 hidden"><div class="flex justify-between items-center"><div><h3 class="text-xl font-bold text-gray-800" id="deudorNombre">-</h3><p class="text-sm text-gray-500" id="deudorTelefono">-</p></div><div class="text-right"><p class="text-sm text-gray-600 uppercase font-bold">Saldo Adeudado</p><p class="text-3xl font-extrabold text-red-600" id="deudorSaldo">$0</p></div></div></div>
-                        <div id="bloqueCobroCtaCte" class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500 hidden"><h3 class="text-lg font-bold text-green-800 mb-4">💰 Registrar Cobro</h3><div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end"><div><label class="block text-sm font-medium text-gray-700">Monto ($)</label><input type="number" id="pagoMonto" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm text-center font-bold text-lg" value="0" min="0"></div><div><label class="block text-sm font-medium text-gray-700">Forma de Pago</label><select id="pagoForma" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white"><option value="efectivo">💵 Efectivo</option><option value="transferencia">📱 Transferencia</option></select></div><div><label class="block text-sm font-medium text-gray-700">Detalle</label><input type="text" id="pagoDetalle" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm" placeholder="Opcional"></div><button onclick="registrarPagoCtaCte()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 font-bold cursor-pointer w-full text-lg shadow-md">✅ Cobrar</button></div></div>
+            </div>
+            <div id="bloqueCobroCtaCte" class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500 hidden">
+                <h3 class="text-lg font-bold text-green-800 mb-4">💰 Registrar Cobro a Cliente</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div><label class="block text-sm font-medium text-gray-700">Monto ($)</label><input type="number" id="pagoMonto" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm text-center font-bold text-lg" value="0" min="0"></div>
+                    <div><label class="block text-sm font-medium text-gray-700">Forma de Pago</label><select id="pagoForma" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white"><option value="efectivo">💵 Efectivo</option><option value="transferencia">📱 Transferencia</option><option value="tarjeta">💳 Tarjeta</option></select></div>
+                    <div><label class="block text-sm font-medium text-gray-700">Detalle</label><input type="text" id="pagoDetalle" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm" placeholder="Opcional"></div>
+                    <button onclick="registrarPagoCtaCte()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 font-bold cursor-pointer w-full text-lg shadow-md">✅ Cobrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: CUENTAS POR PAGAR -->
+    <div id="finanzasPagar" class="hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">🚚 Remitos Pendientes de Pago</h3>
+                <div class="space-y-2 max-h-[500px] overflow-y-auto" id="listaRemitosPendientes"></div>
+            </div>
+            <div class="lg:col-span-2 space-y-6">
+                <div id="infoRemitoSeleccionado" class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-orange-500 hidden">
+                    <div class="flex justify-between items-center">
+                        <div><h3 class="text-xl font-bold text-gray-800" id="remitoProvNombre">-</h3><p class="text-sm text-gray-500" id="remitoNumero">-</p></div>
+                        <div class="text-right"><p class="text-sm text-gray-600 uppercase font-bold">Monto a Pagar</p><p class="text-3xl font-extrabold text-orange-600" id="remitoMonto">$0</p></div>
                     </div>
                 </div>
-                <div id="finanzasPagar" class="hidden"><h3 class="text-lg font-bold text-gray-700 mb-4">🚚 Remitos Pendientes de Pago</h3><div class="space-y-2 max-h-[500px] overflow-y-auto" id="listaRemitosPendientes"></div></div>
-                <div id="finanzasCaja" class="hidden"><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6"><div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500"><h3 class="text-sm font-bold text-gray-500 uppercase">Ingresos de Hoy</h3><p id="cajaIngresos" class="text-3xl font-extrabold text-green-600 mt-2">$0</p></div><div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-red-500"><h3 class="text-sm font-bold text-gray-500 uppercase">Egresos de Hoy</h3><p id="cajaEgresos" class="text-3xl font-extrabold text-red-600 mt-2">$0</p></div><div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500"><h3 class="text-sm font-bold text-gray-500 uppercase">Margen Bruto</h3><p id="cajaSaldo" class="text-3xl font-extrabold text-blue-600 mt-2">$0</p></div></div></div>
+                <div id="bloquePagoProveedor" class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-500 hidden">
+                    <h3 class="text-lg font-bold text-blue-800 mb-4">💸 Registrar Pago a Proveedor</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div><label class="block text-sm font-medium text-gray-700">Monto ($)</label><input type="number" id="pagoProvMonto" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm text-center font-bold text-lg" value="0" min="0"></div>
+                        <div><label class="block text-sm font-medium text-gray-700">Forma de Pago</label><select id="pagoProvForma" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white"><option value="transferencia">📱 Transferencia</option><option value="efectivo">💵 Efectivo</option></select></div>
+                        <div><label class="block text-sm font-medium text-gray-700">Detalle</label><input type="text" id="pagoProvDetalle" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm" placeholder="Factura Nº..."></div>
+                        <button onclick="registrarPagoProveedor()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-bold cursor-pointer w-full text-lg shadow-md">💸 Pagar</button>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
 
+    <!-- TAB 3: FLUJO DE CAJA DIARIO -->
+    <div id="finanzasCaja" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500"><h3 class="text-sm font-bold text-gray-500 uppercase">Ingresos de Hoy</h3><p id="cajaIngresos" class="text-3xl font-extrabold text-green-600 mt-2">$0</p></div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-red-500"><h3 class="text-sm font-bold text-gray-500 uppercase">Egresos de Hoy</h3><p id="cajaEgresos" class="text-3xl font-extrabold text-red-600 mt-2">$0</p></div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500"><h3 class="text-sm font-bold text-gray-500 uppercase">Margen Bruto</h3><p id="cajaSaldo" class="text-3xl font-extrabold text-blue-600 mt-2">$0</p></div>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+            <h3 class="text-lg font-bold text-gray-700 mb-4">📜 Movimientos de Hoy</h3>
+            <table class="w-full text-left border-collapse text-sm">
+                <thead><tr class="bg-gray-200"><th class="p-2 border">Hora</th><th class="p-2 border">Tipo</th><th class="p-2 border">Concepto</th><th class="p-2 border">Forma</th><th class="p-2 border text-right">Monto</th></tr></thead>
+                <tbody id="tablaMovimientosCaja"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 4: HISTÓRICO Y PATRIMONIO -->
+    <div id="finanzasHistorico" class="hidden">
+        <div class="bg-white p-6 rounded-lg shadow-sm mb-6 border-t-4 border-indigo-500">
+            <h3 class="text-lg font-bold text-indigo-800 mb-4">🏦 Patrimonio y Capital</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-bold text-gray-600 uppercase">Tipo de Movimiento</label><select id="capTipo" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white"><option value="aporte_capital">💰 Aporte de Capital</option><option value="retiro_dueno">💸 Retiro del Dueño</option><option value="prestamo_entrada">🏦 Entrada de Préstamo</option><option value="pago_prestamo">📉 Pago de Préstamo</option></select></div>
+                        <div><label class="block text-xs font-bold text-gray-600 uppercase">Monto ($)</label><input type="number" id="capMonto" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm text-center font-bold" value="0" min="0"></div>
+                    </div>
+                    <div><label class="block text-xs font-bold text-gray-600 uppercase">Detalle</label><input type="text" id="capDetalle" class="block w-full px-3 py-2 border rounded-md shadow-sm" placeholder="Ej: Inversión inicial..."></div>
+                    <button onclick="registrarMovimientoCapital()" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 font-bold cursor-pointer w-full">Registrar Movimiento</button>
+                </div>
+                <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                    <p class="text-xs font-bold text-indigo-800 uppercase mb-2">Valor Real del Negocio</p>
+                    <div class="space-y-1 text-sm">
+                        <div class="flex justify-between"><span>+ Capital / Préstamos</span><span id="patrimonioEntradas" class="font-bold text-green-700">$0</span></div>
+                        <div class="flex justify-between"><span>- Retiros / Pagos</span><span id="patrimonioSalidas" class="font-bold text-red-700">$0</span></div>
+                        <hr class="border-indigo-300 my-1">
+                        <div class="flex justify-between"><span>+ Ganancia Acumulada</span><span id="patrimonioGanancia" class="font-bold text-blue-700">$0</span></div>
+                        <hr class="border-indigo-500 my-1">
+                        <div class="flex justify-between text-lg"><span class="font-extrabold text-indigo-900">PATRIMONIO NETO</span><span id="patrimonioNeto" class="font-black text-indigo-900">$0</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500"><h3 class="text-sm font-bold text-gray-500 uppercase">Ingresos Totales</h3><p id="histIngresos" class="text-3xl font-extrabold text-green-600 mt-2">$0</p></div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-red-500"><h3 class="text-sm font-bold text-gray-500 uppercase">Egresos Totales</h3><p id="histEgresos" class="text-3xl font-extrabold text-red-600 mt-2">$0</p></div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500"><h3 class="text-sm font-bold text-gray-500 uppercase">Balance Operativo</h3><p id="histBalance" class="text-3xl font-extrabold text-blue-600 mt-2">$0</p></div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm mb-6 flex items-center gap-4">
+            <label class="font-bold text-gray-700">📅 Año:</label>
+            <select id="selectorAnio" onchange="renderAnioSeleccionado()" class="px-4 py-2 border rounded-md shadow-sm bg-white font-bold text-lg"></select>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead><tr class="bg-gray-200"><th class="p-3 border">Mes</th><th class="p-3 border text-right text-green-700">Ingresos</th><th class="p-3 border text-right text-red-700">Egresos</th><th class="p-3 border text-right text-blue-700">Balance Mes</th><th class="p-3 border text-right text-indigo-700">Acumulado</th></tr></thead>
+                <tbody id="tablaMensual"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<!-- FIN SECCIÓN FINANZAS -->
+            
+            
             <!-- INICIO SECCIÓN MARKETING -->
             <div id="view-marketing" class="view-section hidden bg-gray-900 text-white font-sans py-8 min-h-screen">
                 <div class="container mx-auto px-4">
@@ -699,95 +808,93 @@ async function descontarGasTuboAutomatico(kilosADescontar) {  // ✅ español
         }
 
         async function procesarVenta() { 
-            if(!db) return; 
-            var clienteId = document.getElementById("ventaClienteId").value; 
-            var clienteTexto = document.getElementById("ventaClienteBusq").value; 
-            var tipo = document.getElementById("ventaTipo").value; 
-            var repId = document.getElementById("ventaRepartidorId").value; 
-            var prodId = document.getElementById("ventaProductoId").value; 
-            var modo = document.getElementById("ventaModo").value; 
-            var cantLlenas = parseInt(document.getElementById("ventaCantLlenas").value) || 0; 
-            var cantVacias = parseInt(document.getElementById("ventaCantVacias").value) || 0; 
-            var cantDefect = parseInt(document.getElementById("ventaCantDefect").value) || 0; 
-            var metodoPago = document.getElementById("ventaMetodoPago").value; 
-            var precio = parseFloat(document.getElementById("ventaPrecio").value) || 0; 
-            var totalVenta = cantLlenas * precio; 
+    if(!db) return; 
+    var clienteId = document.getElementById("ventaClienteId").value; 
+    var clienteTexto = document.getElementById("ventaClienteBusq").value; 
+    var tipo = document.getElementById("ventaTipo").value; 
+    var repId = document.getElementById("ventaRepartidorId").value; 
+    var prodId = document.getElementById("ventaProductoId").value; 
+    var modo = document.getElementById("ventaModo").value; 
+    var cantLlenas = parseInt(document.getElementById("ventaCantLlenas").value) || 0; 
+    var cantVacias = parseInt(document.getElementById("ventaCantVacias").value) || 0; 
+    var cantDefect = parseInt(document.getElementById("ventaCantDefect").value) || 0; 
+    var metodoPago = document.getElementById("ventaMetodoPago").value; 
+    var precio = parseFloat(document.getElementById("ventaPrecio").value) || 0; 
+    var totalVenta = cantLlenas * precio; 
 
-            if (cantLlenas === 0) { alert("Debe vender al menos 1 unidad."); return; } 
-            
-            var ubiStock = 'deposito'; 
-            if (tipo === 'reparto') { 
-                if (!repId) { alert("Selecciona qué repartidor hizo la venta."); return; } 
-                ubiStock = 'camion_' + repId; 
-            } 
-            
-            if (modo === 'cambio_falla') { 
-                precio = 0; totalVenta = 0; metodoPago = 'cambio'; cantVacias = 0; cantDefect = cantLlenas; 
-            } 
-            
-            if (!clienteId && clienteTexto.trim() !== "" && clienteTexto !== "CONSUMIDOR FINAL") { 
-                alert("Selecciona un cliente válido de la lista o borra el campo."); return; 
-            } 
-            
-            if (metodoPago === 'cuenta_corriente' && clienteId) { 
-                var cli = clientesCache.find(c => c.id === parseInt(clienteId)); 
-                if (cli && !cli.permite_fiado) { alert("Este cliente NO tiene permitido fiado."); return; } 
-            } 
+    if (cantLlenas === 0) { alert("Debe vender al menos 1 unidad."); return; } 
+    
+    var ubiStock = 'deposito'; 
+    if (tipo === 'reparto') { 
+        if (!repId) { alert("Selecciona qué repartidor hizo la venta."); return; } 
+        ubiStock = 'camion_' + repId; 
+    } 
+    
+    if (modo === 'cambio_falla') { 
+        precio = 0; totalVenta = 0; metodoPago = 'cambio'; cantVacias = 0; cantDefect = cantLlenas; 
+    } 
+    
+    if (!clienteId && clienteTexto.trim() !== "" && clienteTexto !== "CONSUMIDOR FINAL") { 
+        alert("Selecciona un cliente válido de la lista o borra el campo."); return; 
+    } 
+    
+    if (metodoPago === 'cuenta_corriente' && clienteId) { 
+        var cli = clientesCache.find(c => c.id === parseInt(clienteId)); 
+        if (cli && !cli.permite_fiado) { alert("Este cliente NO tiene permitido fiado."); return; } 
+    } 
 
-            var ventaData = { 
-                cliente_id: clienteId ? parseInt(clienteId) : null, 
-                tipo_venta: tipo, 
-                forma_pago: metodoPago, 
-                total: totalVenta, 
-                estado: (metodoPago === 'cuenta_corriente') ? 'pendiente' : 'pagada', 
-                fecha: new Date().toISOString() 
-            }; 
+    var ventaData = { 
+        cliente_id: clienteId ? parseInt(clienteId) : null, 
+        tipo_venta: tipo, 
+        forma_pago: metodoPago, 
+        total: totalVenta, 
+        estado: (metodoPago === 'cuenta_corriente') ? 'pendiente' : 'pagada', 
+        fecha: new Date().toISOString() 
+    }; 
 
-            var rv = await db.from("ventas").insert([ventaData]).select(); 
-            if (rv.error) { alert("Error al guardar venta: " + rv.error.message); return; } 
-            var ventaId = rv.data[0].id; 
+    var rv = await db.from("ventas").insert([ventaData]).select(); 
+    if (rv.error) { alert("Error al guardar venta: " + rv.error.message); return; } 
+    var ventaId = rv.data[0].id; 
 
-            // --- CÁLCULO DE KILOS (Baja la barra del tubo) ---
-            var kilosVendidosDetalle = 0;
-            if (modo.includes('recarga')) { 
-                kilosVendidosDetalle = (parseFloat(document.getElementById("ventaKilos").value) || 0) * cantLlenas;
-            }
+    var kilosVendidosDetalle = 0;
+    if (modo.includes('recarga')) { 
+        kilosVendidosDetalle = (parseFloat(document.getElementById("ventaKilos").value) || 0) * cantLlenas;
+    }
 
-            var detalleData = { 
-                venta_id: ventaId, 
-                prodotto_id: prodId, 
-                cantidad_llenas: cantLlenas, 
-                cantidad_vacias: cantVacias, 
-                cantidad_defectuosas: cantDefect, 
-                precio_unitario: prezzo, 
-                kilos_vendidos: kilosVendidosDetalle 
-            }; 
+    var detalleData = { 
+        venta_id: ventaId, 
+        producto_id: prodId, // CORREGIDO
+        cantidad_llenas: cantLlenas, 
+        cantidad_vacias: cantVacias, 
+        cantidad_defectuosas: cantDefect, 
+        precio_unitario: precio, // CORREGIDO
+        kilos_vendidos: kilosVendidosDetalle 
+    }; 
 
-            var rd = await db.from("ventas_detalle").insert([detalleData]); 
-            if (rd.error) { console.error("Error detalle:", rd.error); } 
+    var rd = await db.from("ventas_detalle").insert([detalleData]); 
+    if (rd.error) { console.error("Error detalle:", rd.error); } 
 
-            await actualizarStock(prodId, 'llena', -cantLlenas, ubiStock); 
-            if (modo === 'intercambio' && cantVacias > 0) await actualizarStock(prodId, 'vacia', cantVacias, ubiStock); 
-            if (modo === 'cambio_falla' && cantDefect > 0) await aggiornamentoStock(prodId, 'defectuosa', cantDefect, ubiStock); 
+    await actualizarStock(prodId, 'llena', -cantLlenas, ubiStock); 
+    if (modo === 'intercambio' && cantVacias > 0) await actualizarStock(prodId, 'vacia', cantVacias, ubiStock); 
+    if (modo === 'cambio_falla' && cantDefect > 0) await actualizarStock(prodId, 'defectuosa', cantDefect, ubiStock); // CORREGIDO
 
-            // DESCONTAR GAS DEL TUBO (Funciona para Local y Domicilio)
-            if (kilosVendidosDetalle > 0) { 
-                await descontarGasTuboAutomatico(kilosVendidosDetalle); 
-            }
+    if (kilosVendidosDetalle > 0) { 
+        await descontarGasTuboAutomatico(kilosVendidosDetalle); 
+    }
 
-            alert(modo === 'cambio_falla' ? "✅ Cambio por falla procesado." : "✅ Venta procesada con éxito!"); 
-            
-            document.getElementById("ventaClienteBusq").value = "CONSUMIDOR FINAL"; 
-            document.getElementById("ventaClienteId").value = ""; 
-            document.getElementById("ventaCantLlenas").value = 1; 
-            document.getElementById("ventaCantVacias").value = 0; 
-            document.getElementById("ventaCantDefect").value = 0; 
-            tipoClienteSeleccionado = 'particular'; 
-            calcolareTotalVenta(); 
-            loadVentasHoy(); 
-            loadStats(); 
-        }
-        
+    alert(modo === 'cambio_falla' ? "✅ Cambio por falla procesado." : "✅ Venta procesada con éxito!"); 
+    
+    document.getElementById("ventaClienteBusq").value = "CONSUMIDOR FINAL"; 
+    document.getElementById("ventaClienteId").value = ""; 
+    document.getElementById("ventaCantLlenas").value = 1; 
+    document.getElementById("ventaCantVacias").value = 0; 
+    document.getElementById("ventaCantDefect").value = 0; 
+    tipoClienteSeleccionado = 'particular'; 
+    calcularTotalVenta(); // CORREGIDO
+    loadVentasHoy(); 
+    loadStats(); 
+}
+    
      
 
                 async function loadVentasHoy() { 
@@ -1165,6 +1272,309 @@ async function descontarGasTuboAutomatico(kilosADescontar) {  // ✅ español
             function limpiarTelefonoUruguay(tel) { if (!tel) return ''; var limpio = tel.replace(/[\s\-\(\)]/g, ''); if (limpio.startsWith('0')) { limpio = '598' + limpio.substring(1); } else if (limpio.startsWith('9') && limpio.length === 8) { limpio = '598' + limpio; } return limpio; }
             function previsualizarWhatsApp() { var mensaje = document.getElementById("mkt-wa-message").value || "Escribe un mensaje..."; document.getElementById("mkt-wa-preview").innerText = mensaje.replace(/{nombre}/g, "Juan Pérez"); }
             async function iniciarEnvioWhatsApp() { var target = document.getElementById("mkt-wa-target").value; var mensajeBase = document.getElementById("mkt-wa-message").value; if (!mensajeBase) { alert("Escribe un mensaje."); return; } if (!confirm("Se abrirá WhatsApp por cada cliente. ¿Continuar?")) return; var clientesAEnviar = []; if (target === 'all') { clientesAEnviar = clientesCache.filter(c => c.telefono); } else { clientesAEnviar = clientesCache.filter(c => c.tipo_cliente === target && c.telefono); } if (clientesAEnviar.length === 0) { alert("No hay clientes."); return; } var delay = 0; clientesAEnviar.forEach(function(cliente) { setTimeout(function() { var telLimpio = limpiarTelefonoUruguay(cliente.telefono); var mensajePersonalizado = mensajeBase.replace(/{nombre}/g, cliente.nombre || "Cliente"); window.open('https://wa.me/' + telLimpio + '?text=' + encodeURIComponent(mensajePersonalizado), '_blank'); }, delay); delay += 1500; }); }
-        </script>  
+    // ==========================================
+// MÓDULO DE FINANZAS COMPLETO
+// ==========================================
+var clienteFinanzasSeleccionadoId = null;
+var remitoFinanzasSeleccionadoId = null;
+var flujoHistorico = {}; 
+var costosFijosDiarios = 0;
+
+function mostrarTabFinanzas(tab) {
+    document.getElementById("finanzasCobrar").classList.add("hidden");
+    document.getElementById("finanzasPagar").classList.add("hidden");
+    document.getElementById("finanzasCaja").classList.add("hidden");
+    document.getElementById("finanzasHistorico").classList.add("hidden");
+    
+    document.getElementById("tabCobrar").className = "py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap";
+    document.getElementById("tabPagar").className = "py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap";
+    document.getElementById("tabCaja").className = "py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap";
+    document.getElementById("tabHistorico").className = "py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap";
+
+    if (tab === 'cobrar') {
+        document.getElementById("finanzasCobrar").classList.remove("hidden");
+        document.getElementById("tabCobrar").className = "py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap";
+        loadFinanzas();
+    } else if (tab === 'pagar') {
+        document.getElementById("finanzasPagar").classList.remove("hidden");
+        document.getElementById("tabPagar").className = "py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap";
+        loadCuentasPagar();
+    } else if (tab === 'caja') {
+        document.getElementById("finanzasCaja").classList.remove("hidden");
+        document.getElementById("tabCaja").className = "py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap";
+        loadFlujoCaja();
+    } else if (tab === 'historico') {
+        document.getElementById("finanzasHistorico").classList.remove("hidden");
+        document.getElementById("tabHistorico").className = "py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap";
+        loadFlujoCajaHistorico();
+    }
+}
+
+// --- CUENTAS POR COBRAR ---
+async function loadFinanzas() {
+    if(!db) return;
+    const { data, error } = await db.from("clientes").select("*").gt("saldo_ctacte", 0).order("saldo_ctacte", { ascending: false });
+    if (error) { console.error("Error:", error); return; }
+    var lista = document.getElementById("listaDeudores");
+    lista.innerHTML = "";
+    if (data && data.length > 0) {
+        data.forEach(function(c) {
+            var div = document.createElement("div");
+            div.className = "p-3 bg-gray-50 rounded-md border border-gray-200 cursor-pointer hover:bg-blue-50";
+            div.innerHTML = `<div class="flex justify-between items-center"><div><p class="font-bold text-gray-800 text-sm">${c.nombre}</p></div><p class="font-extrabold text-red-600">$${parseFloat(c.saldo_ctacte).toLocaleString('es-UY')}</p></div>`;
+            div.onclick = function() { seleccionarDeudor(c); };
+            lista.appendChild(div);
+        });
+    } else { lista.innerHTML = "<p class='text-center text-gray-400 text-sm py-4'>Sin deudas.</p>"; }
+}
+
+function filtrarDeudores() {
+    var texto = document.getElementById("busquedaDeudor").value.toLowerCase();
+    var items = document.getElementById("listaDeudores").children;
+    for (var i = 0; i < items.length; i++) { items[i].style.display = items[i].innerText.toLowerCase().includes(texto) ? "block" : "none"; }
+}
+
+async function seleccionarDeudor(c) {
+    clienteFinanzasSeleccionadoId = c.id;
+    document.getElementById("infoDeudorSeleccionado").classList.remove("hidden");
+    document.getElementById("deudorNombre").innerText = c.nombre;
+    document.getElementById("deudorTelefono").innerText = c.telefono;
+    document.getElementById("deudorSaldo").innerText = "$" + parseFloat(c.saldo_ctacte).toLocaleString('es-UY');
+    document.getElementById("pagoMonto").value = parseFloat(c.saldo_ctacte);
+    document.getElementById("bloqueCobroCtaCte").classList.remove("hidden");
+}
+
+async function registrarPagoCtaCte() {
+    if(!db || !clienteFinanzasSeleccionadoId) return;
+    var monto = parseFloat(document.getElementById("pagoMonto").value) || 0;
+    var forma = document.getElementById("pagoForma").value;
+    var detalle = document.getElementById("pagoDetalle").value;
+    if (monto <= 0) { alert("Monto inválido."); return; }
+    if (!confirm("¿Cobrar $" + monto.toLocaleString('es-UY') + "?")) return;
+    
+    await db.from("pagos_ctacte").insert([{ cliente_id: clienteFinanzasSeleccionadoId, monto: monto, forma_pago: forma, detalle: detalle }]);
+    
+    const { data: cliData } = await db.from("clientes").select("saldo_ctacte").eq("id", clienteFinanzasSeleccionadoId).single();
+    var nuevoSaldo = (parseFloat(cliData.saldo_ctacte) || 0) - monto;
+    if (nuevoSaldo < 0) nuevoSaldo = 0;
+    await db.from("clientes").update({ saldo_ctacte: nuevoSaldo }).eq("id", clienteFinanzasSeleccionadoId);
+    
+    if (nuevoSaldo === 0) { 
+        await db.from("ventas").update({ estado: 'pagada' }).eq("cliente_id", clienteFinanzasSeleccionadoId).eq("estado", "pendiente"); 
+    }
+    alert("✅ Cobro registrado.");
+    document.getElementById("pagoDetalle").value = "";
+    loadFinanzas(); loadStats();
+}
+
+// --- CUENTAS POR PAGAR ---
+async function loadCuentasPagar() {
+    if(!db) return;
+    const { data, error } = await db.from("remitos_proveedor").select("*, proveedores(nombre)").eq("estado_pago", "pendiente").order("id", { ascending: true });
+    if (error) { console.error("Error CxP:", error); return; }
+    var lista = document.getElementById("listaRemitosPendientes");
+    lista.innerHTML = "";
+    if (data && data.length > 0) {
+        data.forEach(function(r) {
+            var div = document.createElement("div");
+            div.className = "p-3 bg-orange-50 rounded-md border border-orange-200 cursor-pointer hover:bg-orange-100";
+            div.innerHTML = `<div class="flex justify-between items-center"><div><p class="font-bold text-gray-800 text-sm">${r.proveedores ? r.proveedores.nombre : 'N/A'}</p><p class="text-xs text-gray-500">Remito: ${r.nro_remito}</p></div><p class="font-extrabold text-orange-600">$${(parseFloat(r.monto_total) || 0).toLocaleString('es-UY')}</p></div>`;
+            div.onclick = function() { seleccionarRemito(r); };
+            lista.appendChild(div);
+        });
+    } else { lista.innerHTML = "<p class='text-center text-gray-400 text-sm py-4'>Sin deudas.</p>"; }
+}
+
+async function seleccionarRemito(r) {
+    remitoFinanzasSeleccionadoId = r.id;
+    document.getElementById("infoRemitoSeleccionado").classList.remove("hidden");
+    document.getElementById("remitoProvNombre").innerText = r.proveedores ? r.proveedores.nombre : 'N/A';
+    document.getElementById("remitoNumero").innerText = "Remito Nº " + r.nro_remito;
+    document.getElementById("remitoMonto").innerText = "$" + (parseFloat(r.monto_total) || 0).toLocaleString('es-UY');
+    document.getElementById("pagoProvMonto").value = parseFloat(r.monto_total) || 0;
+    document.getElementById("bloquePagoProveedor").classList.remove("hidden");
+}
+
+async function registrarPagoProveedor() {
+    if(!db || !remitoFinanzasSeleccionadoId) return;
+    var monto = parseFloat(document.getElementById("pagoProvMonto").value) || 0;
+    var forma = document.getElementById("pagoProvForma").value;
+    var detalle = document.getElementById("pagoProvDetalle").value;
+    if (monto <= 0) { alert("Monto inválido."); return; }
+    if (!confirm("¿Pagar $" + monto.toLocaleString('es-UY') + " a proveedor?")) return;
+    
+    var provId = null;
+    const { data: remData } = await db.from("remitos_proveedor").select("proveedor_id").eq("id", remitoFinanzasSeleccionadoId).single();
+    if(remData) provId = remData.proveedor_id;
+    
+    await db.from("pagos_proveedores").insert([{ proveedor_id: provId, monto: monto, forma_pago: forma, detalle: detalle }]);
+    await db.from("remitos_proveedor").update({ estado_pago: 'pagado' }).eq("id", remitoFinanzasSeleccionadoId);
+    
+    alert("✅ Pago registrado.");
+    document.getElementById("pagoProvDetalle").value = "";
+    remitoFinanzasSeleccionadoId = null;
+    loadCuentasPagar(); 
+}
+
+// --- FLUJO DE CAJA DIARIO ---
+async function loadFlujoCaja() {
+    if(!db) return;
+    
+    var hoy = getFechaLocal(); 
+    var ingresos = 0, egresos = 0, movimientos = [];
+    
+    const { data: ventasHoy } = await db.from("ventas").select("forma_pago, total, tipo_venta, fecha").gte("fecha", hoy + "T00:00:00").lte("fecha", hoy + "T23:59:59").neq("forma_pago", "cuenta_corriente").neq("forma_pago", "cambio");
+    if (ventasHoy) {
+        ventasHoy.forEach(function(v) {
+            if(parseFloat(v.total) > 0) { 
+                ingresos += parseFloat(v.total); 
+                movimientos.push({ hora: new Date(v.fecha).toLocaleTimeString('es-UY', {hour:'2-digit', minute:'2-digit'}), tipo: 'INGRESO', concepto: 'Venta ' + v.tipo_venta, forma: v.forma_pago, monto: parseFloat(v.total) }); 
+            }
+        });
+    }
+    
+    const { data: cobrosHoy } = await db.from("pagos_ctacte").select("*").gte("fecha", hoy + "T00:00:00").lte("fecha", hoy + "T23:59:59");
+    if (cobrosHoy) {
+        cobrosHoy.forEach(function(c) { 
+            ingresos += parseFloat(c.monto); 
+            movimientos.push({ hora: new Date(c.fecha).toLocaleTimeString('es-UY', {hour:'2-digit', minute:'2-digit'}), tipo: 'INGRESO', concepto: 'Cobro Cta. Cte.', forma: c.forma_pago, monto: parseFloat(c.monto) }); 
+        });
+    }
+    
+    const { data: pagosProvHoy } = await db.from("pagos_proveedores").select("*").gte("fecha", hoy + "T00:00:00").lte("fecha", hoy + "T23:59:59");
+    if (pagosProvHoy) {
+        pagosProvHoy.forEach(function(p) { 
+            egresos += parseFloat(p.monto); 
+            movimientos.push({ hora: new Date(p.fecha).toLocaleTimeString('es-UY', {hour:'2-digit', minute:'2-digit'}), tipo: 'EGRESO', concepto: 'Pago Proveedor', forma: p.forma_pago, monto: parseFloat(p.monto) }); 
+        });
+    }
+    
+    document.getElementById("cajaIngresos").innerText = "$" + ingresos.toLocaleString('es-UY');
+    document.getElementById("cajaEgresos").innerText = "$" + egresos.toLocaleString('es-UY');
+    document.getElementById("cajaSaldo").innerText = "$" + (ingresos - egresos).toLocaleString('es-UY');
+
+    var tbody = document.getElementById("tablaMovimientosCaja");
+    tbody.innerHTML = "";
+    movimientos.sort((a,b) => b.hora.localeCompare(a.hora));
+    movimientos.forEach(function(m) {
+        var tr = document.createElement("tr");
+        var colorMonto = m.tipo === 'INGRESO' ? 'text-green-700' : 'text-red-700';
+        var signo = m.tipo === 'INGRESO' ? '+' : '-';
+        var bgTipo = m.tipo === 'INGRESO' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+        tr.innerHTML = `<td class="p-2 border">${m.hora}</td><td class="p-2 border text-center"><span class="px-2 py-1 rounded text-xs font-bold ${bgTipo}">${m.tipo}</span></td><td class="p-2 border text-sm">${m.concepto}</td><td class="p-2 border text-center text-xs">${m.forma_pago}</td><td class="p-2 border text-right font-bold ${colorMonto}">${signo}$${m.monto.toLocaleString('es-UY')}</td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+// --- HISTÓRICO Y PATRIMONIO ---
+async function loadFlujoCajaHistorico() {
+    if(!db) return;
+    flujoHistorico = {};
+    let totalIngresos = 0, totalEgresos = 0;
+    
+    const { data: ventas } = await db.from("ventas").select("total, fecha").neq("forma_pago", "cuenta_corriente").neq("forma_pago", "cambio");
+    if (ventas) {
+        ventas.forEach(function(v) {
+            if(parseFloat(v.total) > 0) {
+                var fecha = new Date(v.fecha); var anio = fecha.getFullYear(); var mes = fecha.getMonth();
+                if (!flujoHistorico[anio]) flujoHistorico[anio] = {};
+                if (!flujoHistorico[anio][mes]) flujoHistorico[anio][mes] = { ing: 0, eg: 0 };
+                flujoHistorico[anio][mes].ing += parseFloat(v.total); totalIngresos += parseFloat(v.total);
+            }
+        });
+    }
+    
+    const { data: cobros } = await db.from("pagos_ctacte").select("monto, fecha");
+    if (cobros) {
+        cobros.forEach(function(c) {
+            var fecha = new Date(c.fecha); var anio = fecha.getFullYear(); var mes = fecha.getMonth();
+            if (!flujoHistorico[anio]) flujoHistorico[anio] = {};
+            if (!flujoHistorico[anio][mes]) flujoHistorico[anio][mes] = { ing: 0, eg: 0 };
+            flujoHistorico[anio][mes].ing += parseFloat(c.monto); totalIngresos += parseFloat(c.monto);
+        });
+    }
+    
+    const { data: pagosProv } = await db.from("pagos_proveedores").select("monto, fecha");
+    if (pagosProv) {
+        pagosProv.forEach(function(p) {
+            var fecha = new Date(p.fecha); var anio = fecha.getFullYear(); var mes = fecha.getMonth();
+            if (!flujoHistorico[anio]) flujoHistorico[anio] = {};
+            if (!flujoHistorico[anio][mes]) flujoHistorico[anio][mes] = { ing: 0, eg: 0 };
+            flujoHistorico[anio][mes].eg += parseFloat(p.monto); totalEgresos += parseFloat(p.monto);
+        });
+    }
+    
+    document.getElementById("histIngresos").innerText = "$" + totalIngresos.toLocaleString('es-UY');
+    document.getElementById("histEgresos").innerText = "$" + totalEgresos.toLocaleString('es-UY');
+    var balanceTotal = totalIngresos - totalEgresos;
+    document.getElementById("histBalance").innerText = "$" + balanceTotal.toLocaleString('es-UY');
+    document.getElementById("histBalance").className = balanceTotal >= 0 ? "text-3xl font-extrabold text-blue-600 mt-2" : "text-3xl font-extrabold text-red-600 mt-2";
+
+    await loadPatrimonio(totalIngresos, totalEgresos);
+
+    var selectAnio = document.getElementById("selectorAnio");
+    selectAnio.innerHTML = "";
+    var anios = Object.keys(flujoHistorico).sort((a,b) => b - a);
+    if(anios.length === 0){ anios.push(new Date().getFullYear()); flujoHistorico[anios[0]] = {}; }
+    anios.forEach(function(anio) { var opt = document.createElement("option"); opt.value = anio; opt.innerText = anio; selectAnio.appendChild(opt); });
+    renderAnioSeleccionado();
+}
+
+function renderAnioSeleccionado() {
+    var anioSeleccionado = document.getElementById("selectorAnio").value;
+    if (!anioSeleccionado) return;
+    var dataAnio = flujoHistorico[anioSeleccionado] || {};
+    var tbody = document.getElementById("tablaMensual"); tbody.innerHTML = "";
+    var acumulado = 0; var totalIngAnio = 0, totalEgAnio = 0;
+    var nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    for (var m = 0; m < 12; m++) {
+        var dataMes = dataAnio[m] || { ing: 0, eg: 0 }; var balanceMes = dataMes.ing - dataMes.eg; acumulado += balanceMes; totalIngAnio += dataMes.ing; totalEgAnio += dataMes.eg;
+        if (dataMes.ing > 0 || dataMes.eg > 0 || acumulado !== 0) {
+            var tr = document.createElement("tr"); tr.className = "hover:bg-gray-50 border-b";
+            tr.innerHTML = `<td class="p-3 border font-bold">${nombresMeses[m]}</td><td class="p-3 border text-right font-bold text-green-700">$${dataMes.ing.toLocaleString('es-UY')}</td><td class="p-3 border text-right font-bold text-red-700">$${dataMes.eg.toLocaleString('es-UY')}</td><td class="p-3 border text-right font-extrabold ${balanceMes>=0?'text-green-700':'text-red-700'}">$${balanceMes.toLocaleString('es-UY')}</td><td class="p-3 border text-right font-extrabold ${acumulado>=0?'text-indigo-700':'text-red-700'}">$${acumulado.toLocaleString('es-UY')}</td>`;
+            tbody.appendChild(tr);
+        }
+    }
+}
+
+async function loadPatrimonio(gananciaOperativaAcumulada, egresoOperativoAcumulado) {
+    if(!db) return;
+    const { data, error } = await db.from("movimientos_capital").select("*").order("fecha", { ascending: true });
+    if (error) { console.error("Error capital:", error); return; }
+    var entradasCapital = 0, salidasCapital = 0;
+    if (data) {
+        data.forEach(function(m) {
+            if(m.tipo_movimiento === 'aporte_capital' || m.tipo_movimiento === 'prestamo_entrada') {
+                entradasCapital += parseFloat(m.monto);
+            } else {
+                salidasCapital += parseFloat(m.monto);
+            }
+        });
+    }
+    var patrimonioNeto = (entradasCapital + gananciaOperativaAcumulada) - salidasCapital;
+    document.getElementById("patrimonioEntradas").innerText = "$" + entradasCapital.toLocaleString('es-UY');
+    document.getElementById("patrimonioSalidas").innerText = "$" + salidasCapital.toLocaleString('es-UY');
+    document.getElementById("patrimonioGanancia").innerText = "$" + gananciaOperativaAcumulada.toLocaleString('es-UY');
+    document.getElementById("patrimonioNeto").innerText = "$" + patrimonioNeto.toLocaleString('es-UY');
+    document.getElementById("patrimonioNeto").className = patrimonioNeto >= 0 ? "font-black text-indigo-900" : "font-black text-red-700";
+}
+
+async function registrarMovimientoCapital() {
+    if(!db) return;
+    var tipo = document.getElementById("capTipo").value;
+    var monto = parseFloat(document.getElementById("capMonto").value) || 0;
+    var detalle = document.getElementById("capDetalle").value;
+    if (monto <= 0) { alert("Ingrese un monto válido."); return; }
+    if (!confirm("¿Registrar movimiento de capital por $" + monto.toLocaleString('es-UY') + "?")) return;
+    var dataInsert = { tipo_movimiento: tipo, monto: monto, detalle: detalle };
+    const { error } = await db.from("movimientos_capital").insert([dataInsert]);
+    if (error) { alert("Error: " + error.message); return; }
+    alert("✅ Movimiento registrado.");
+    document.getElementById("capMonto").value = 0; document.getElementById("capDetalle").value = "";
+    loadFlujoCajaHistorico();
+}  
+    
+    
+    </script>  
     </body>
 </html>
