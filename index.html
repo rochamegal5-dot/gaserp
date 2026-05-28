@@ -350,20 +350,118 @@
     </div>
 </div>
 <!-- FIN SECCIÓN FINANZAS -->
-            
-            
-            <!-- INICIO SECCIÓN MARKETING -->
-            <div id="view-marketing" class="view-section hidden bg-gray-900 text-white font-sans py-8 min-h-screen">
-                <div class="container mx-auto px-4">
-                    <div class="mb-6"><button onclick="mostrarSeccion('resumen', this)" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm transition duration-300"><i class="fas fa-arrow-left"></i> Volver al Inicio</button></div>
-                    <div class="flex justify-between items-center mb-8"><h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600"><i class="fas fa-robot"></i> Marketing IA Autónomo</h1></div>
-                    <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8 border border-gray-700"><h2 class="text-xl font-semibold mb-4">Crear Nueva Campaña</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm text-gray-400 mb-1">Producto/Servicio</label><input type="text" id="mkt-productName" class="w-full bg-gray-700 p-2 rounded outline-none focus:ring-2 focus:ring-purple-500" placeholder="Ej: Garrafa 13kg"></div><div><label class="block text-sm text-gray-400 mb-1">Objetivo</label><input type="text" id="mkt-campaignGoal" class="w-full bg-gray-700 p-2 rounded outline-none focus:ring-2 focus:ring-purple-500" placeholder="Ej: Venta flash"></div></div><button onclick="MarketingAI.generateCampaign()" id="mkt-btnGenerate" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 py-3 rounded font-bold transition duration-300">Generar Spot y Programar con IA</button></div>
-                    <div class="bg-gray-800 p-6 rounded-lg border border-gray-700 shadow-lg"><h3 class="text-white font-bold text-lg mb-4 flex items-center gap-2"><i class="fab fa-whatsapp text-green-500 text-2xl"></i> Envío Directo por WhatsApp</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><div class="mb-4"><label class="text-gray-300 text-sm font-bold block mb-2">Destinatario:</label><select id="mkt-wa-target" class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 outline-none"><option value="all">📢 Todos los Clientes</option><option value="particular">👤 Solo Particulares</option><option value="deudor">💰 Clientes con Deuda</option></select></div><div class="mb-4"><label class="text-gray-300 text-sm font-bold block mb-2">Mensaje:</label><textarea id="mkt-wa-message" rows="4" class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 outline-none" placeholder="¡Hola {nombre}! Promo..."></textarea></div></div><div class="flex flex-col justify-between"><div class="bg-gray-900 p-4 rounded-lg h-32 overflow-y-auto text-sm text-green-100 font-mono" id="mkt-wa-preview">Vista previa...</div><div class="mt-4"><button onclick="iniciarEnvioWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded font-bold transition text-lg shadow-lg w-full">🚀 Iniciar Envío Masivo</button></div></div></div></div>
+
+            <!-- INICIO MÓDULO MARKETING IA -->
+<div id="view-marketing" class="view-section hidden bg-gray-900 text-white font-sans py-8 min-h-screen">
+    <div class="container mx-auto px-4">
+        <div class="mb-6">
+            <button onclick="mostrarSeccion('resumen', this)" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm transition duration-300">
+                <i class="fas fa-arrow-left"></i> Volver al Inicio
+            </button>
+        </div>
+        
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+                <i class="fas fa-robot"></i> Marketing IA Autónomo
+            </h1>
+            <div class="flex gap-2">
+                <button onclick="MarketingAI.connectFacebook()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm transition duration-300">
+                    <i class="fab fa-facebook"></i> Conectar Meta
+                </button>
+            </div>
+        </div>
+
+        <!-- Formulario de Campaña -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8 border border-gray-700">
+            <h2 class="text-xl font-semibold mb-4">Crear Nueva Campaña Omnicanal</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Producto/Servicio</label>
+                    <input type="text" id="mkt-productName" class="w-full bg-gray-700 p-2 rounded outline-none focus:ring-2 focus:ring-purple-500" placeholder="Ej: Garrafa 13kg">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Objetivo de la Campaña</label>
+                    <input type="text" id="mkt-campaignGoal" class="w-full bg-gray-700 p-2 rounded outline-none focus:ring-2 focus:ring-purple-500" placeholder="Ej: Venta flash">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Tono de Marca</label>
+                    <input type="text" id="mkt-brandVoice" class="w-full bg-gray-700 p-2 rounded outline-none focus:ring-2 focus:ring-purple-500" placeholder="Ej: Innovador, casual">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Audiencia Objetivo</label>
+                    <select id="mkt-targetSegment" class="w-full bg-gray-700 p-2 rounded outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="Todos">Todos los Contactos</option>
+                        <option value="VIP">Clientes VIP</option>
+                        <option value="Inactivo">Clientes Inactivos</option>
+                        <option value="Nuevo">Nuevos Clientes</option>
+                    </select>
                 </div>
             </div>
-        </main>
+            <button onclick="MarketingAI.generateCampaign()" id="mkt-btnGenerate" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 py-3 rounded font-bold transition duration-300">
+                Generar Spot, Imágenes y Programar con IA
+            </button>
+        </div>
+
+        <div id="mkt-loadingState" class="hidden text-center py-8">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 mx-auto"></div>
+            <p class="text-gray-400">La IA está analizando datos, redactando y calculando horarios...</p>
+        </div>
+
+        <div id="mkt-resultsContainer" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Las tarjetas se inyectarán aquí -->
+        </div>
+
+        <!-- MÓDULO WHATSAPP MARKETING (INTEGRADO) -->
+        <div class="bg-gray-800 p-6 rounded-lg border border-gray-700 shadow-lg">
+            <h3 class="text-white font-bold text-lg mb-4 flex items-center gap-2">
+                <i class="fab fa-whatsapp text-green-500 text-2xl"></i> Envío Directo por WhatsApp
+            </h3>
+            <p class="text-gray-400 text-sm mb-6">Envía promociones o avisos a tus clientes. Se abrirá tu WhatsApp Web/Escritorio con el mensaje listo.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <div class="mb-4">
+                        <label class="text-gray-300 text-sm font-bold block mb-2">1. Destinatario:</label>
+                        <select id="mkt-wa-target" class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-green-500 outline-none">
+                            <option value="all">📢 Todos los Clientes Activos</option>
+                            <option value="particular">👤 Solo Particulares</option>
+                            <option value="comercio">🏢 Solo Comercios</option>
+                            <option value="deudor">💰 Clientes con Deuda (Cta. Cte.)</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-gray-300 text-sm font-bold block mb-2">2. Mensaje:</label>
+                        <textarea id="mkt-wa-message" rows="5" class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 focus:border-green-500 outline-none" placeholder="¡Hola {nombre}! Tenemos una promo increíble..."></textarea>
+                        <p class="text-gray-500 text-xs mt-1">Puedes usar {nombre} para personalizar el mensaje automáticamente.</p>
+                    </div>
+                </div>
+                <div class="flex flex-col justify-between">
+                    <div>
+                        <label class="text-gray-300 text-sm font-bold block mb-2">Vista Previa:</label>
+                        <div class="bg-gray-900 p-4 rounded-lg h-40 overflow-y-auto text-sm text-green-100 font-mono" id="mkt-wa-preview">
+                            La vista previa aparecerá aquí...
+                        </div>
+                    </div>
+                    <div class="mt-4 flex flex-col gap-2">
+                        <button onclick="previsualizarWhatsApp()" class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded font-bold transition">
+                            👁️ Actualizar Vista Previa
+                        </button>
+                        <button onclick="iniciarEnvioWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded font-bold transition text-lg shadow-lg">
+                            🚀 Iniciar Envío Masivo
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="mkt-wa-progress" class="hidden mt-4 bg-gray-700 p-3 rounded-lg">
+                <p class="text-yellow-400 text-sm font-bold" id="mkt-wa-status">Preparando envío... Haz clic en "Enviar" en cada ventana de WhatsApp que se abra.</p>
+            </div>
+        </div>
     </div>
-    
+</div>
+<!-- FIN MÓDULO MARKETING IA -->
+            
+            
+           
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -1255,24 +1353,203 @@ async function descontarGasTuboAutomatico(kilosADescontar) {  // ✅ español
                 });
             }
         }
+
+            // ==========================================
+// MÓDULO MARKETING IA (Completo)
+// ==========================================
+const MarketingAI = {
+    config: {
+        supabaseUrl: 'https://wpsmcinqzudnscujkjpq.supabase.co',
+        supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwc21jaW5xenVkbnNjdWpranBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NDQ3MDksImV4cCI6MjA5NDEyMDcwOX0.Tw51_rFkiZZYheOksOidL9DRbHIRwF1Z5fM1fCjLCp4',
+        metaAppId: 'TU_APP_ID_DE_META'
+    },
+    supabaseClient: null,
+
+    init: function() {
+        if (window.supabaseClient) {
+            this.supabaseClient = window.supabaseClient;
+        } else if (db) {
+            this.supabaseClient = db;
+        }
+        console.log("Módulo Marketing IA inicializado.");
+    },
+
+    connectFacebook: function() {
+        alert("Función de conexión a Meta (Facebook/Instagram/WhatsApp) en desarrollo. Requiere configurar OAuth en Supabase.");
+    },
+
+    generateCampaign: async function() {
+        const productName = document.getElementById('mkt-productName').value;
+        const campaignGoal = document.getElementById('mkt-campaignGoal').value;
+        const brandVoice = document.getElementById('mkt-brandVoice').value;
+        const targetSegment = document.getElementById('mkt-targetSegment').value;
+
+        if (!productName || !campaignGoal) {
+            alert('Por favor, completa el producto y el objetivo.');
+            return;
+        }
+
+        document.getElementById('mkt-btnGenerate').disabled = true;
+        document.getElementById('mkt-loadingState').classList.remove('hidden');
+        document.getElementById('mkt-resultsContainer').classList.add('hidden');
+        document.getElementById('mkt-resultsContainer').innerHTML = '';
+
+        try {
+            const response = await fetch(`${this.config.supabaseUrl}/functions/v1/generate-campaign`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.config.supabaseAnonKey}`
+                },
+                body: JSON.stringify({ productName, campaignGoal, brandVoice, targetSegment })
+            });
+
+            if (!response.ok) throw new Error('Edge Function no configurada o error de red.');
+            
+            const result = await response.json();
+            if (!result.success) throw new Error(result.error || 'Error generando campaña');
+
+            const { data: posts, error } = await this.supabaseClient
+                .from('generated_posts')
+                .select('*')
+                .eq('campaign_id', result.campaignId)
+                .order('scheduled_time', { ascending: true });
+
+            if (error) throw error;
+            this.renderResults(posts);
+
+        } catch (error) {
+            alert('⚠️ Módulo IA: Debes desplegar el Edge Function "generate-campaign" en Supabase para usar la generación automática.\nError: ' + error.message);
+        } finally {
+            document.getElementById('mkt-btnGenerate').disabled = false;
+            document.getElementById('mkt-loadingState').classList.add('hidden');
+        }
+    },
+
+    renderResults: function(posts) {
+        const container = document.getElementById('mkt-resultsContainer');
+        container.classList.remove('hidden');
+        container.innerHTML = '';
+
+        if (!posts || posts.length === 0) {
+            container.innerHTML = '<p class="text-gray-400 col-span-3 text-center">No se generaron posts o falta la tabla "generated_posts" en Supabase.</p>';
+            return;
+        }
+
+        const platformIcons = {
+            instagram: 'fab fa-instagram text-pink-500',
+            linkedin: 'fab fa-linkedin text-blue-400',
+            twitter: 'fab fa-twitter text-sky-400',
+            tiktok: 'fab fa-tiktok text-white',
+            facebook: 'fab fa-facebook text-blue-600',
+            whatsapp: 'fab fa-whatsapp text-green-500'
+        };
+
+        posts.forEach(post => {
+            const date = new Date(post.scheduled_time);
+            const formattedDate = date.toLocaleString('es-UY', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            const imageSrc = post.image_urls && post.image_urls.length > 0 ? post.image_urls[0] : 'https://via.placeholder.com/400x300?text=Sin+Imagen';
+
+            const card = `
+                <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-md hover:border-purple-500 transition duration-300">
+                    <div class="relative"><img src="${imageSrc}" alt="Spot" class="w-full h-48 object-cover"></div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="capitalize font-bold text-lg flex items-center gap-2"><i class="${platformIcons[post.platform] || 'fas fa-globe'}"></i> ${post.platform}</span>
+                            <span class="bg-yellow-900 text-yellow-400 text-xs px-2 py-1 rounded-full">${post.target_segment || 'Todos'}</span>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-4 h-20 overflow-y-auto">${post.content}</p>
+                        <div class="flex justify-between items-center text-xs text-gray-500 border-t border-gray-700 pt-3">
+                            <div class="flex items-center"><i class="far fa-clock mr-2"></i><span>${formattedDate}</span></div>
+                            <span class="bg-green-900 text-green-400 px-2 py-1 rounded-full">Programado</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+    }
+};
+
+function limpiarTelefonoUruguay(tel) {
+    if (!tel) return '';
+    var limpio = tel.replace(/[\s\-\(\)]/g, ''); 
+    if (limpio.startsWith('0')) {
+        limpio = '598' + limpio.substring(1);
+    } else if (limpio.startsWith('9') && limpio.length === 8) {
+        limpio = '598' + limpio;
+    }
+    return limpio;
+}
+
+function previsualizarWhatsApp() {
+    var mensaje = document.getElementById("mkt-wa-message").value || "Escribe un mensaje...";
+    var previewText = mensaje.replace(/{nombre}/g, "Juan Pérez");
+    document.getElementById("mkt-wa-preview").innerText = previewText;
+}
+
+async function iniciarEnvioWhatsApp() {
+    var target = document.getElementById("mkt-wa-target").value;
+    var mensajeBase = document.getElementById("mkt-wa-message").value;
+    
+    if (!mensajeBase) {
+        alert("Por favor, escribe un mensaje antes de enviar.");
+        return;
+    }
+
+    if (!confirm("⚠️ Se abrirá una ventana de WhatsApp por cada cliente. Asegúrate de tener WhatsApp Web abierto. ¿Continuar?")) return;
+
+    var progressBox = document.getElementById("mkt-wa-progress");
+    if(progressBox) progressBox.classList.remove("hidden");
+
+    var clientesAEnviar = [];
+    if (target === 'all') {
+        clientesAEnviar = clientesCache.filter(c => c.telefono);
+    } else if (target === 'particular' || target === 'comercio') {
+        clientesAEnviar = clientesCache.filter(c => (c.tipo_cliente || '').includes(target) && c.telefono);
+    } else if (target === 'deudor') {
+        if(db) {
+            const { data: deudores } = await db.from("clientes").select("*").gt("saldo_ctacte", 0);
+            clientesAEnviar = (deudores || []).filter(c => c.telefono);
+        }
+    }
+
+    if (clientesAEnviar.length === 0) {
+        alert("No se encontraron clientes con teléfono para este segmento.");
+        if(progressBox) progressBox.classList.add("hidden");
+        return;
+    }
+
+    var statusText = document.getElementById("mkt-wa-status");
+    if(statusText) statusText.innerText = `Enviando a ${clientesAEnviar.length} clientes...`;
+
+    var delay = 0;
+    clientesAEnviar.forEach(function(cliente) {
+        setTimeout(function() {
+            var telLimpio = limpiarTelefonoUruguay(cliente.telefono);
+            var mensajePersonalizado = mensajeBase.replace(/{nombre}/g, cliente.nombre || "Cliente");
+            var mensajeURL = encodeURIComponent(mensajePersonalizado);
+            window.open(`https://wa.me/${telLimpio}?text=${mensajeURL}`, '_blank');
+        }, delay);
+        delay += 1500; // 1.5 segundos de espera entre cada ventana
+    });
+
+    setTimeout(function() {
+        if(statusText) statusText.innerText = "✅ Proceso finalizado. Verifica las pestañas abiertas.";
+    }, delay + 1000);
+}
+
+// Actualizar vista previa mientras escribe
+document.addEventListener('DOMContentLoaded', function() {
+    var textarea = document.getElementById("mkt-wa-message");
+    if(textarea) {
+        textarea.addEventListener('input', previsualizarWhatsApp);
+    }
+});
         
     
-            // ==========================================
-            // MÓDULO MARKETING IA (Simplificado)
-            // ==========================================
-            const MarketingAI = {
-                init: function() { console.log("MarketingAI inicializado."); },
-                generateCampaign: async function() {
-                    var prod = document.getElementById('mkt-productName').value; var goal = document.getElementById('mkt-campaignGoal').value;
-                    if (!prod || !goal) { alert('Por favor, completa el producto y el objetivo.'); return; }
-                    alert("Módulo IA en desarrollo. Se conectará con OpenAI para generar el post.");
-                }
-            };
-
-            function limpiarTelefonoUruguay(tel) { if (!tel) return ''; var limpio = tel.replace(/[\s\-\(\)]/g, ''); if (limpio.startsWith('0')) { limpio = '598' + limpio.substring(1); } else if (limpio.startsWith('9') && limpio.length === 8) { limpio = '598' + limpio; } return limpio; }
-            function previsualizarWhatsApp() { var mensaje = document.getElementById("mkt-wa-message").value || "Escribe un mensaje..."; document.getElementById("mkt-wa-preview").innerText = mensaje.replace(/{nombre}/g, "Juan Pérez"); }
-            async function iniciarEnvioWhatsApp() { var target = document.getElementById("mkt-wa-target").value; var mensajeBase = document.getElementById("mkt-wa-message").value; if (!mensajeBase) { alert("Escribe un mensaje."); return; } if (!confirm("Se abrirá WhatsApp por cada cliente. ¿Continuar?")) return; var clientesAEnviar = []; if (target === 'all') { clientesAEnviar = clientesCache.filter(c => c.telefono); } else { clientesAEnviar = clientesCache.filter(c => c.tipo_cliente === target && c.telefono); } if (clientesAEnviar.length === 0) { alert("No hay clientes."); return; } var delay = 0; clientesAEnviar.forEach(function(cliente) { setTimeout(function() { var telLimpio = limpiarTelefonoUruguay(cliente.telefono); var mensajePersonalizado = mensajeBase.replace(/{nombre}/g, cliente.nombre || "Cliente"); window.open('https://wa.me/' + telLimpio + '?text=' + encodeURIComponent(mensajePersonalizado), '_blank'); }, delay); delay += 1500; }); }
-    // ==========================================
+     
+        // ==========================================
 // MÓDULO DE FINANZAS COMPLETO
 // ==========================================
 var clienteFinanzasSeleccionadoId = null;
