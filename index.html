@@ -65,9 +65,65 @@
             <div id="view-proveedores" class="view-section hidden"><h2 class="text-2xl font-semibold text-gray-800 mb-6">🚚 Proveedores y Remitos</h2><div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"><div class="bg-white p-6 rounded-lg shadow-sm"><h3 class="text-lg font-bold text-gray-700 mb-4">Datos del Proveedor</h3><input type="hidden" id="provIdEditando"><div class="grid grid-cols-1 gap-3"><div><label class="block text-sm font-medium text-gray-700">Nombre / Razón Social *</label><input type="text" id="provNombre" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm uppercase"></div><div><label class="block text-sm font-medium text-gray-700">RUT / CUIT</label><input type="text" id="provCuit" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm"></div><div><label class="block text-sm font-medium text-gray-700">Teléfono</label><input type="text" id="provTelefono" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm"></div><button onclick="guardarProveedor()" class="mt-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 font-bold cursor-pointer w-full">Guardar Proveedor</button></div></div><div class="bg-white p-6 rounded-lg shadow-sm"><h3 class="text-lg font-bold text-gray-700 mb-4">📥 Cargar Remito</h3><div class="grid grid-cols-2 gap-3 mb-4"><div><label class="block text-sm font-medium text-gray-700">Proveedor *</label><select id="remProvId" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white"></select></div><div><label class="block text-sm font-medium text-gray-700">Nº Remito *</label><input type="text" id="remNumero" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm"></div></div><input type="hidden" id="remProdId1"><div class="grid grid-cols-4 gap-2 mb-2 items-center bg-gray-50 p-2 rounded border"><div class="col-span-1 font-bold text-gray-800 text-sm">Garrafa 13kg</div><div><label class="block text-xs text-center text-green-700 font-bold">Entran</label><input type="number" id="remLlenas1" class="block w-full px-1 py-1 border rounded-md shadow-sm text-center" value="0"></div><div><label class="block text-xs text-center text-gray-700 font-bold">Salen Vac.</label><input type="number" id="remVacias1" class="block w-full px-1 py-1 border rounded-md shadow-sm text-center" value="0"></div><div><label class="block text-xs text-center text-red-700 font-bold">Defect.</label><input type="number" id="remDefect1" class="block w-full px-1 py-1 border rounded-md shadow-sm text-center" value="0"></div></div><input type="hidden" id="remProdId2"><div class="grid grid-cols-4 gap-2 mb-2 items-center bg-gray-50 p-2 rounded border"><div class="col-span-1 font-bold text-gray-800 text-sm">Garrafa 11kg</div><div><input type="number" id="remLlenas2" class="block w-full px-1 py-1 border rounded-md shadow-sm text-center" value="0"></div><div><input type="number" id="remVacias2" class="block w-full px-1 py-1 border rounded-md shadow-sm text-center" value="0"></div><div><input type="number" id="remDefect2" class="block w-full px-1 py-1 border rounded-md shadow-sm text-center" value="0"></div></div><button onclick="guardarRemito()" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 font-bold cursor-pointer w-full">📥 Procesar Remito</button></div></div><div class="bg-white p-6 rounded-lg shadow-sm"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2 border">Nombre</th><th class="p-2 border">RUT</th><th class="p-2 border">Teléfono</th><th class="p-2 border text-center">Acciones</th></tr></thead><tbody id="tablaProveedores"></tbody></table></div></div>
 
             <div id="view-stock" class="view-section hidden"><h2 class="text-2xl font-semibold text-gray-800 mb-6">🗄️ Stock en Depósito</h2><div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"><div class="bg-white p-4 rounded-lg shadow-sm border-t-4 border-blue-500"><h3 class="text-gray-600 text-sm font-bold uppercase">🛢️ Garrafa 13kg</h3><div class="mt-3 space-y-1 text-sm"><div class="flex justify-between items-center"><span class="text-green-700 font-bold">Llenas</span><span id="sum13Llenas" class="text-lg font-extrabold text-green-700">0</span></div><div class="flex justify-between items-center"><span class="text-gray-700 font-bold">Vacías</span><span id="sum13Vacias" class="text-lg font-extrabold text-gray-700">0</span></div></div></div><div class="bg-white p-4 rounded-lg shadow-sm border-t-4 border-emerald-500"><h3 class="text-gray-600 text-sm font-bold uppercase">🛢️ Garrafa 11kg</h3><div class="mt-3 space-y-1 text-sm"><div class="flex justify-between items-center"><span class="text-green-700 font-bold">Llenas</span><span id="sum11Llenas" class="text-lg font-extrabold text-green-700">0</span></div><div class="flex justify-between items-center"><span class="text-gray-700 font-bold">Vacías</span><span id="sum11Vacias" class="text-lg font-extrabold text-gray-700">0</span></div></div></div></div><div class="bg-white p-6 rounded-lg shadow-sm mb-8"><h3 class="text-lg font-bold text-gray-700 mb-4">📊 Detalle</h3><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2 border">Producto</th><th class="p-2 border text-center text-green-700">Llenas</th><th class="p-2 border text-center text-gray-700">Vacías</th></tr></thead><tbody id="tablaStock"></tbody></table></div><div class="bg-white p-6 rounded-lg shadow-sm mb-8"><h3 class="text-lg font-bold text-gray-700 mb-2">⛽ Recargas (Tubo 43.5kg)</h3><div class="bg-gray-50 p-3 rounded-md border mb-4 flex items-center justify-between"><div><span class="block text-xs font-medium text-gray-700">Gas Restante</span><span id="gasRestanteTexto" class="text-2xl font-bold text-purple-700">43.5 kg</span></div><div class="w-1/2 bg-gray-200 rounded-full h-4"><div id="gasBarra" class="bg-purple-600 h-4 rounded-full transition-all duration-500" style="width: 100%"></div></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end"><div><label class="block text-sm font-medium text-gray-700">Kilos a Cargar</label><input type="number" id="recargaKilos" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm text-center" step="0.5" min="0.5" max="3" value="3"></div><button onclick="recargarGarrafa3kg()" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 font-bold cursor-pointer w-full">💨 Recargar</button><button onclick="cambiarTubo43()" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 font-bold cursor-pointer w-full">🔄 Cambiar Tubo</button></div></div></div>
+                       <div id="view-ventas" class="view-section hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">💰 Punto de Venta</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"><div><label class="block text-sm font-medium text-gray-700">Tipo de Venta</label><select id="ventaTipo" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white" onchange="ajustarFormularioVenta()"><option value="mostrador">🏪 Mostrador</option><option value="reparto">🛵 Reparto</option></select></div><div><label class="block text-sm font-medium text-gray-700">Repartidor</label><select id="ventaRepartidorId" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white disabled:bg-gray-200" disabled><option value="">-- Seleccionar --</option></select></div><div class="relative"><label class="block text-sm font-medium text-gray-700">Cliente</label><input type="text" id="ventaClienteBusq" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm" placeholder="Buscar..." oninput="autocompletarClienteVenta()"><input type="hidden" id="ventaClienteId"><div id="dropVentaCliente" class="autocomplete-list hidden"></div></div></div>
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium text-gray-700">Producto *</label><select id="ventaProductoId" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white" onchange="calcularTotalVenta()"></select></div><div><label class="block text-sm font-medium text-gray-700">Modo *</label><select id="ventaModo" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white" onchange="calcularTotalVenta()"><option value="intercambio">🔄 Intercambio</option><option value="envase_gas">🛒 Envase + Gas</option><option value="cambio_falla">🔄 Cambio por Falla ($0)</option></select></div><div><label class="block text-sm font-medium text-green-700 font-bold">Cant. Llenas *</label><input type="number" id="ventaCantLlenas" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm text-center font-bold" value="1" min="1" onchange="calcularTotalVenta()"></div><div><label class="block text-sm font-medium text-gray-700">Precio ($)</label><input type="number" id="ventaPrecio" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 font-bold text-green-700" readonly></div></div></div>
+                        <div class="bg-gray-50 p-4 rounded-lg border mb-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end"><div><label class="block text-sm font-medium text-gray-700">Método de Pago *</label><select id="ventaMetodoPago" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white"><option value="efectivo">💵 Efectivo</option><option value="tarjeta">💳 Tarjeta</option><option value="transferencia">📱 Transferencia</option><option value="cuenta_corriente">📓 Fiado</option></select></div><div class="bg-white p-2 rounded-md border-2 border-dashed border-green-500 text-center h-full flex flex-col justify-center"><p class="text-xs text-gray-600 uppercase font-bold">Total a Cobrar</p><p id="ventaTotalMostrar" class="text-3xl font-black text-green-600">$0</p></div></div></div>
+                        <div class="flex justify-end"><button onclick="procesarVenta()" class="bg-green-600 text-white px-8 py-3 rounded-md hover:bg-green-700 font-bold cursor-pointer text-lg shadow-md">✅ Cobrar</button></div>
+                    </div>
+                    
+                    <!-- COLUMNAS DE CAJA -->
+                    <div class="space-y-6">
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-t-4 border-blue-500">
+                            <h3 class="text-md font-bold text-blue-800 mb-3">🏪 Caja Local (Mostrador)</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between"><span>💵 Efectivo</span><span id="localEfectivo" class="font-bold text-green-700">$0</span></div>
+                                <div class="flex justify-between"><span>💳 Tarjeta</span><span id="localTarjeta" class="font-bold text-blue-700">$0</span></div>
+                                <div class="flex justify-between"><span>📱 Transferencia</span><span id="localTransferencia" class="font-bold text-purple-700">$0</span></div>
+                                <div class="flex justify-between"><span>📓 Fiado</span><span id="localFiado" class="font-bold text-yellow-700">$0</span></div>
+                                <hr>
+                                <div class="flex justify-between font-extrabold text-base"><span>Unid. Vendidas</span><span id="localUnidades">0</span></div>
+                            </div>
+                        </div>
 
-            <div id="view-ventas" class="view-section hidden"><h2 class="text-2xl font-semibold text-gray-800 mb-6">💰 Punto de Venta</h2><div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8"><div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"><div><label class="block text-sm font-medium text-gray-700">Tipo de Venta</label><select id="ventaTipo" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white" onchange="ajustarFormularioVenta()"><option value="mostrador">🏪 Mostrador</option><option value="reparto">🛵 Reparto</option></select></div><div><label class="block text-sm font-medium text-gray-700">Repartidor</label><select id="ventaRepartidorId" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white disabled:bg-gray-200" disabled><option value="">-- Seleccionar --</option></select></div><div class="relative"><label class="block text-sm font-medium text-gray-700">Cliente</label><input type="text" id="ventaClienteBusq" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm" placeholder="Buscar..." oninput="autocompletarClienteVenta()"><input type="hidden" id="ventaClienteId"><div id="dropVentaCliente" class="autocomplete-list hidden"></div></div></div><div class="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium text-gray-700">Producto *</label><select id="ventaProductoId" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white" onchange="calcularTotalVenta()"></select></div><div><label class="block text-sm font-medium text-gray-700">Modo *</label><select id="ventaModo" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white" onchange="calcularTotalVenta()"><option value="intercambio">🔄 Intercambio</option><option value="envase_gas">🛒 Envase + Gas</option><option value="cambio_falla">🔄 Cambio por Falla ($0)</option></select></div><div><label class="block text-sm font-medium text-green-700 font-bold">Cant. Llenas *</label><input type="number" id="ventaCantLlenas" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm text-center font-bold" value="1" min="1" onchange="calcularTotalVenta()"></div><div><label class="block text-sm font-medium text-gray-700">Precio Automático ($)</label><input type="number" id="ventaPrecio" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 font-bold text-green-700" readonly></div></div></div><div class="bg-gray-50 p-4 rounded-lg border mb-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end"><div><label class="block text-sm font-medium text-gray-700">Método de Pago *</label><select id="ventaMetodoPago" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white"><option value="efectivo">💵 Efectivo</option><option value="tarjeta">💳 Tarjeta</option><option value="transferencia">📱 Transferencia</option><option value="cuenta_corriente">📓 Fiado</option></select></div><div class="bg-white p-2 rounded-md border-2 border-dashed border-green-500 text-center h-full flex flex-col justify-center"><p class="text-xs text-gray-600 uppercase font-bold">Total a Cobrar</p><p id="ventaTotalMostrar" class="text-3xl font-black text-green-600">$0</p></div></div></div><div class="flex justify-between items-center bg-gray-100 p-4 rounded-lg border"><div><p class="text-sm text-gray-600">Total:</p><p id="ventaTotalMostrar2" class="text-3xl font-extrabold text-blue-800">$0</p></div><button onclick="procesarVenta()" class="bg-green-600 text-white px-8 py-3 rounded-md hover:bg-green-700 font-bold cursor-pointer text-lg shadow-md">✅ Cobrar</button></div></div><div class="space-y-6"><div class="bg-gray-800 text-white p-4 rounded-lg shadow-sm"><h3 class="text-md font-bold mb-3">📊 General del Día</h3><div class="space-y-2 text-sm"><div class="flex justify-between"><span>Total Efectivo</span><span id="genEfectivo" class="font-bold text-green-400">$0</span></div><div class="flex justify-between"><span>Total Digital</span><span id="genDigital" class="font-bold text-blue-400">$0</span></div><div class="flex justify-between"><span>Total Fiado</span><span id="genFiado" class="font-bold text-yellow-400">$0</span></div><hr class="border-gray-600"><div class="flex justify-between text-lg"><span class="font-bold">TOTAL</span><span id="genTotal" class="font-black text-white">$0</span></div></div></div></div></div></div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-t-4 border-purple-500">
+                            <h3 class="text-md font-bold text-purple-800 mb-3">🛵 Caja Repartidores</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between"><span>💵 Efectivo</span><span id="repEfectivo" class="font-bold text-green-700">$0</span></div>
+                                <div class="flex justify-between"><span>💳 Tarjeta</span><span id="repTarjeta" class="font-bold text-blue-700">$0</span></div>
+                                <div class="flex justify-between"><span>📱 Transferencia</span><span id="repTransferencia" class="font-bold text-purple-700">$0</span></div>
+                                <div class="flex justify-between"><span>📓 Fiado</span><span id="repFiado" class="font-bold text-yellow-700">$0</span></div>
+                                <hr>
+                                <div class="flex justify-between font-extrabold text-base"><span>Unid. Vendidas</span><span id="repUnidades">0</span></div>
+                            </div>
+                        </div>
 
+                        <div class="bg-gray-800 text-white p-4 rounded-lg shadow-sm">
+                            <h3 class="text-md font-bold mb-3">📊 General del Día</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between"><span>Total Efectivo</span><span id="genEfectivo" class="font-bold text-green-400">$0</span></div>
+                                <div class="flex justify-between"><span>Total Digital</span><span id="genDigital" class="font-bold text-blue-400">$0</span></div>
+                                <div class="flex justify-between"><span>Total Fiado</span><span id="genFiado" class="font-bold text-yellow-400">$0</span></div>
+                                <hr class="border-gray-600">
+                                <div class="flex justify-between text-lg"><span class="font-bold">TOTAL GENERAL</span><span id="genTotal" class="font-black text-white">$0</span></div>
+                                <hr class="border-gray-600 my-2">
+                                <p class="text-xs uppercase tracking-wider text-gray-400 font-bold">Unidades / Kilos Vendidos</p>
+                                <div class="flex justify-between"><span>🛢️ Garrafas 13kg</span><span id="genUni13" class="font-bold">0</span></div>
+                                <div class="flex justify-between"><span>🛢️ Garrafas 11kg</span><span id="genUni11" class="font-bold">0</span></div>
+                                <div class="flex justify-between"><span>🛢️ Tubos 45kg</span><span id="genUni45" class="font-bold">0</span></div>
+                                <div class="flex justify-between"><span>⛽ Kilos Tubo 43.5</span><span id="genKilos43" class="font-bold">0</span></div>
+                            </div>
+                            <button onclick="cerrarCajaDia()" class="mt-4 w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 font-bold cursor-pointer text-sm">🔒 Cerrar Caja del Día</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm"><h3 class="text-lg font-bold text-gray-700 mb-4">Historial de Hoy</h3><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2 border">Hora</th><th class="p-2 border">Origen</th><th class="p-2 border">Cliente</th><th class="p-2 border">Producto</th><th class="p-2 border text-center">Llenas</th><th class="p-2 border text-center">Vacías</th><th class="p-2 border text-center">Def.</th><th class="p-2 border">Pago</th><th class="p-2 border text-right">Total</th></tr></thead><tbody id="tablaVentasHoy"></tbody></table></div>
+            </div>
+            //
+          
             <div id="view-repartidores" class="view-section hidden"><h2 class="text-2xl font-semibold text-gray-800 mb-6">🛵 Gestión de Repartidores</h2><div class="bg-white p-6 rounded-lg shadow-sm mb-8"><input type="hidden" id="repIdEditando"><div class="flex gap-4 items-end"><div class="flex-1"><label class="block text-sm font-medium text-gray-700">Nombre del Repartidor *</label><input type="text" id="repNombre" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm uppercase" placeholder="Ej: JUAN PEREZ"></div><button onclick="guardarRepartidor()" id="btnGuardarRep" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 font-bold cursor-pointer">Guardar</button><button onclick="cancelarEdicionRep()" id="btnCancelarRep" class="hidden bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 font-bold cursor-pointer">Cancelar</button></div></div><table class="w-full text-left border-collapse bg-white rounded-lg shadow-sm"><thead><tr class="bg-gray-200"><th class="p-2 border">ID</th><th class="p-2 border">Nombre</th><th class="p-2 border text-center">Acciones</th></tr></thead><tbody id="tablaRepartidores"></tbody></table></div>
 
             <!-- GPS y MARKETING se omiten en HTML por espacio, van en el JS o los reconstruimos si falta. Avisame si falta algo visual. -->
@@ -109,14 +165,16 @@
         var db = null;
         var productosCache = []; var clientesCache = []; var proveedoresCache = []; var repartidoresCache = []; var preciosCache = [];
         function getFechaLocal() { let d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split("T")[0]; }
-        function inicializarSupabase() {
+                function inicializarSupabase() {
             if (typeof window.supabase !== "undefined") {
                 var URL = "https://wpsmcinqzudnscujkjpq.supabase.co";
                 var KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwc21jaW5xenVkbnNjdWpranBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NDQ3MDksImV4cCI6MjA5NDEyMDcwOX0.Tw51_rFkiZZYheOksOidL9DRbHIRwF1Z5fM1fCjLCp4";
                 db = window.supabase.createClient(URL, KEY); window.supabaseClient = db;
                 loadStats(); loadProductos(); loadClientes(); initDashboardMap();
+                escucharVentasRealtime(); // <--- AGREGAR ESTA LÍNEA
             } else { alert("Error: Supabase no cargó."); }
         }
+       
         window.onload = function() { inicializarSupabase(); };
         function mostrarSeccion(nombreSeccion, botonClickeado) {
             var secciones = document.getElementsByClassName("view-section"); for(var i=0; i<secciones.length; i++) { secciones[i].classList.add("hidden"); }
@@ -220,9 +278,101 @@
         function calcularTotalVenta() { var pid=document.getElementById("ventaProductoId").value; var modo=document.getElementById("ventaModo").value; var cl=parseInt(document.getElementById("ventaCantLlenas").value)||0; var inpP=document.getElementById("ventaPrecio"); var inpV=document.getElementById("ventaCantVacias"); var inpD=document.getElementById("ventaCantDefect"); if(modo==='intercambio'){inpV.value=cl;inpV.readOnly=true;inpD.value=0;inpD.readOnly=true;}else if(modo==='cambio_falla'){inpV.value=0;inpV.readOnly=true;inpD.value=cl;inpD.readOnly=true;}else{inpV.value=0;inpV.readOnly=true;inpD.value=0;inpD.readOnly=true;} var precio=0; if(modo==='cambio_falla'){precio=0;}else{var rp=preciosCache.find(p=>String(p.producto_id)===String(pid)&&p.tipo_cliente===tipoClienteSeleccionado&&p.modo_venta===modo); if(rp)precio=rp.precio; else{var prod=productosCache.find(p=>String(p.id)===String(pid));if(prod)precio=prod.precio_venta_base;}} inpP.value=precio; var total=cl*precio; document.getElementById("ventaTotalMostrar").innerText="$"+total.toLocaleString('es-UY'); document.getElementById("ventaTotalMostrar2").innerText="$"+total.toLocaleString('es-UY'); }
         
         async function procesarVenta() { if(!db)return; var cid=document.getElementById("ventaClienteId").value; var ct=document.getElementById("ventaClienteBusq").value; var tip=document.getElementById("ventaTipo").value; var rid=document.getElementById("ventaRepartidorId").value; var pid=document.getElementById("ventaProductoId").value; var modo=document.getElementById("ventaModo").value; var cl=parseInt(document.getElementById("ventaCantLlenas").value)||0; var cv=parseInt(document.getElementById("ventaCantVacias").value)||0; var cd=parseInt(document.getElementById("ventaCantDefect").value)||0; var mp=document.getElementById("ventaMetodoPago").value; var pr=parseFloat(document.getElementById("ventaPrecio").value)||0; var tot=cl*pr; if(cl===0){alert("Debe vender al menos 1");return;} var ubi='deposito'; if(tip==='reparto'){if(!rid){alert("Selecciona repartidor");return;}ubi='camion_'+rid;} if(modo==='cambio_falla'){pr=0;tot=0;mp='cambio';cv=0;cd=cl;} if(mp==='cuenta_corriente'&&cid){var cli=clientesCache.find(c=>c.id===parseInt(cid));if(cli&&!cli.permite_fiado){alert("Cliente NO permite fiado");return;}} var vd={cliente_id:cid?parseInt(cid):null,tipo_venta:tip,forma_pago:mp,total:tot,estado:(mp==='cuenta_corriente')?'pendiente':'pagada',fecha:new Date().toISOString()}; var rv=await db.from("ventas").insert([vd]).select(); if(rv.error){alert("Error:"+rv.error.message);return;} var vid=rv.data[0].id; var dd={venta_id:vid,producto_id:pid,cantidad_llenas:cl,cantidad_vacias:cv,cantidad_defectuosas:cd,precio_unitario:pr}; await db.from("ventas_detalle").insert([dd]); await actualizarStock(pid,'llena',-cl,ubi); if(modo==='intercambio'&&cv>0)await actualizarStock(pid,'vacia',cv,ubi); if(modo==='cambio_falla'&&cd>0)await actualizarStock(pid,'defectuosa',cd,ubi); alert("✅ Venta procesada!"); document.getElementById("ventaClienteBusq").value="CONSUMIDOR FINAL"; document.getElementById("ventaClienteId").value=""; document.getElementById("ventaCantLlenas").value=1; tipoClienteSeleccionado='particular'; calcularTotalVenta(); loadVentasHoy(); loadStats(); }
-        
-        async function loadVentasHoy() { if(!db)return; var hoy=getFechaLocal(); const{data}=await db.from("ventas").select("*,clientes(nombre),ventas_detalle(cantidad_llenas,cantidad_vacias,cantidad_defectuosas,productos(nombre,tipo_producto))").gte("fecha",hoy+"T00:00:00").lte("fecha",hoy+"T23:59:59").order("id",{ascending:false}); var tb=document.getElementById("tablaVentasHoy"); tb.innerHTML=""; var efe=0,dig=0,fia=0; if(data&&data.length>0){data.forEach(v=>{var hora=new Date(v.fecha).toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'}); var cn=v.clientes?v.clientes.nombre:"CF"; var det=v.ventas_detalle&&v.ventas_detalle[0]?v.ventas_detalle[0]:null; var pn=det&&det.productos?det.productos.nombre:"N/A"; if(v.forma_pago==='efectivo')efe+=v.total; else if(v.forma_pago==='cuenta_corriente')fia+=v.total; else dig+=v.total; tb.innerHTML+=`<tr><td class='p-2 border'>${hora}</td><td class='p-2 border text-center'><span class="px-2 py-1 rounded text-xs font-bold ${v.tipo_venta==='mostrador'?'bg-blue-100 text-blue-800':'bg-purple-100 text-purple-800'}">${v.tipo_venta}</span></td><td class='p-2 border text-sm'>${cn}</td><td class='p-2 border text-sm'>${pn}</td><td class='p-2 border text-center font-bold text-green-700'>${det?det.cantidad_llenas:0}</td><td class='p-2 border text-center text-gray-600'>${det?det.cantidad_vacias:0}</td><td class='p-2 border text-center text-red-600'>${det?det.cantidad_defectuosas:0}</td><td class='p-2 border text-center text-xs'>${v.forma_pago.replace('_',' ')}</td><td class='p-2 border text-right font-bold'>$${v.total.toLocaleString('es-UY')}</td></tr>`; });} document.getElementById("genEfectivo").innerText="$"+efe.toLocaleString('es-UY'); document.getElementById("genDigital").innerText="$"+dig.toLocaleString('es-UY'); document.getElementById("genFiado").innerText="$"+fia.toLocaleString('es-UY'); document.getElementById("genTotal").innerText="$"+(efe+dig+fia).toLocaleString('es-UY'); }
 
+
+                async function loadVentasHoy() { 
+            if(!db) return; 
+            var hoy = getFechaLocal(); 
+            const { data, error } = await db.from("ventas").select("*, clientes(nombre), ventas_detalle(cantidad_llenas, cantidad_vacias, cantidad_defectuosas, kilos_vendidos, productos(nombre, tipo_producto))").gte("fecha", hoy + "T00:00:00").lte("fecha", hoy + "T23:59:59").order("id", { ascending: false }); 
+            
+            var tbody = document.getElementById("tablaVentasHoy"); tbody.innerHTML = ""; 
+            
+            var local = { efe: 0, tar: 0, trans: 0, fia: 0, uni: 0 };
+            var rep = { efe: 0, tar: 0, trans: 0, fia: 0, uni: 0 };
+            var genUni13 = 0, genUni11 = 0, genUni45 = 0, genKilos43 = 0;
+
+            if (data && data.length > 0) { 
+                data.forEach(function(v) { 
+                    var hora = new Date(v.fecha).toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' }); 
+                    var cn = v.clientes ? v.clientes.nombre : "CF"; 
+                    var det = v.ventas_detalle && v.ventas_detalle[0] ? v.ventas_detalle[0] : null; 
+                    var pn = det && det.productos ? det.productos.nombre : "N/A"; 
+                    var tipoProd = det && det.productos ? det.productos.tipo_producto : null;
+                    var llenas = det ? det.cantidad_llenas : 0;
+                    var vacias = det ? det.cantidad_vacias : 0;
+                    var defect = det ? det.cantidad_defectuosas : 0;
+                    var kilos = det ? (parseFloat(det.kilos_vendidos) || 0) : 0;
+
+                    var cajaDestino = (v.tipo_venta === 'reparto') ? rep : local;
+                    cajaDestino.uni += llenas;
+
+                    if (v.forma_pago === 'efectivo') cajaDestino.efe += v.total;
+                    else if (v.forma_pago === 'tarjeta') cajaDestino.tar += v.total;
+                    else if (v.forma_pago === 'transferencia') cajaDestino.trans += v.total;
+                    else if (v.forma_pago === 'cuenta_corriente') cajaDestino.fia += v.total;
+
+                    if (tipoProd === 'garrafa_13') genUni13 += llenas;
+                    else if (tipoProd === 'garrafa_11') genUni11 += llenas;
+                    else if (tipoProd === 'garrafa_45') genUni45 += llenas;
+                    else if (tipoProd === 'tubo_43') genKilos43 += kilos;
+
+                    var tr = document.createElement("tr"); tr.className = "hover:bg-gray-50 border-b";
+                    tr.innerHTML = `<td class='p-2 border text-center'>${hora}</td><td class='p-2 border text-center'><span class="px-2 py-1 rounded text-xs font-bold ${v.tipo_venta==='mostrador'?'bg-blue-100 text-blue-800':'bg-purple-100 text-purple-800'}">${v.tipo_venta}</span></td><td class='p-2 border text-sm'>${cn}</td><td class='p-2 border text-sm'>${pn}</td><td class='p-2 border text-center font-bold text-green-700'>${llenas}</td><td class='p-2 border text-center text-gray-600'>${vacias}</td><td class='p-2 border text-center text-red-600'>${defect}</td><td class='p-2 border text-center text-xs'>${v.forma_pago.replace('_',' ')}</td><td class='p-2 border text-right font-bold'>$${v.total.toLocaleString('es-UY')}</td>`;
+                    tbody.appendChild(tr); 
+                }); 
+            } else { tbody.innerHTML = "<tr><td colspan='9' class='p-4 text-center text-gray-500'>No hay ventas hoy.</td></tr>"; }
+
+            document.getElementById("localEfectivo").innerText = "$" + local.efe.toLocaleString('es-UY');
+            document.getElementById("localTarjeta").innerText = "$" + local.tar.toLocaleString('es-UY');
+            document.getElementById("localTransferencia").innerText = "$" + local.trans.toLocaleString('es-UY');
+            document.getElementById("localFiado").innerText = "$" + local.fia.toLocaleString('es-UY');
+            document.getElementById("localUnidades").innerText = local.uni;
+
+            document.getElementById("repEfectivo").innerText = "$" + rep.efe.toLocaleString('es-UY');
+            document.getElementById("repTarjeta").innerText = "$" + rep.tar.toLocaleString('es-UY');
+            document.getElementById("repTransferencia").innerText = "$" + rep.trans.toLocaleString('es-UY');
+            document.getElementById("repFiado").innerText = "$" + rep.fia.toLocaleString('es-UY');
+            document.getElementById("repUnidades").innerText = rep.uni;
+
+            var totalEfe = local.efe + rep.efe; var totalDig = local.tar + local.trans + rep.tar + rep.trans; var totalFia = local.fia + rep.fia;
+            document.getElementById("genEfectivo").innerText = "$" + totalEfe.toLocaleString('es-UY');
+            document.getElementById("genDigital").innerText = "$" + totalDig.toLocaleString('es-UY');
+            document.getElementById("genFiado").innerText = "$" + totalFia.toLocaleString('es-UY');
+            document.getElementById("genTotal").innerText = "$" + (totalEfe + totalDig + totalFia).toLocaleString('es-UY');
+            
+            document.getElementById("genUni13").innerText = genUni13;
+            document.getElementById("genUni11").innerText = genUni11;
+            document.getElementById("genUni45").innerText = genUni45;
+            document.getElementById("genKilos43").innerText = genKilos43.toFixed(1); 
+        }
+
+        async function cerrarCajaDia() { 
+            if (!confirm("⚠️ ¿Cerrar la caja del día? Esto actualizará las deudas de clientes.")) return; 
+            var hoy = getFechaLocal(); 
+            const { data: ventasFiado } = await db.from("ventas").select("id, cliente_id, total").eq("forma_pago", "cuenta_corriente").gte("fecha", hoy+"T00:00:00").lte("fecha", hoy+"T23:59:59").eq("estado", "pendiente");
+            if (ventasFiado && ventasFiado.length > 0) { 
+                var deudasPorCliente = {};
+                ventasFiado.forEach(v => { if(!v.cliente_id) return; if(!deudasPorCliente[v.cliente_id]) deudasPorCliente[v.cliente_id] = 0; deudasPorCliente[v.cliente_id] += v.total; });
+                for (var clienteId in deudasPorCliente) {
+                    const { data: cliData } = await db.from("clientes").select("saldo_ctacte").eq("id", clienteId).single(); 
+                    var saldoActual = cliData ? (cliData.saldo_ctacte || 0) : 0; 
+                    await db.from("clientes").update({ saldo_ctacte: saldoActual + deudasPorCliente[clienteId] }).eq("id", clienteId);
+                }
+            }
+            await db.from("ventas").update({ estado: 'cerrada' }).gte("fecha", hoy+"T00:00:00").lte("fecha", hoy+"T23:59:59").eq("estado", "pendiente");
+            alert("✅ Caja cerrada y cuentas corrientes actualizadas."); loadVentasHoy(); loadClientes(); 
+        }
+
+        // 🚀 FUNCION MÁGICA: ACTUALIZAR CAJA EN TIEMPO REAL
+        function escucharVentasRealtime() {
+            if(!db) return;
+            db.channel('ventas-realtime')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ventas' }, payload => {
+                console.log("🚀 Nueva venta detectada desde la App!", payload.new);
+                loadVentasHoy(); // Refresca la grilla y las cajas automáticamente
+            }).subscribe();
+        }
+     
         async function loadRepartidoresWeb() { if(!db)return; const{data}=await db.from("repartidores").select("*").order("id"); repartidoresCache=data||[]; var tb=document.getElementById("tablaRepartidores"); tb.innerHTML=""; repartidoresCache.forEach(r => { tb.innerHTML+=`<tr><td class='p-2 border'>${r.id}</td><td class='p-2 border font-bold'>${r.nombre}</td><td class='p-2 border text-center'><button onclick='eliminarRepartidor(${r.id})' class='bg-red-600 text-white px-2 py-1 rounded text-xs'>Del</button></td></tr>`; }); }
         async function guardarRepartidor() { if(!db)return; var n=document.getElementById("repNombre").value.toUpperCase(); if(!n){alert("Ingresa nombre");return;} await db.from("repartidores").insert([{nombre:n}]); alert("¡Guardado!"); document.getElementById("repNombre").value=""; loadRepartidoresWeb(); }
         async function eliminarRepartidor(id) { if(!confirm("¿Eliminar?"))return; await db.from("repartidores").delete().eq("id",id); loadRepartidoresWeb(); }
