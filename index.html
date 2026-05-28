@@ -2754,7 +2754,6 @@ async function cargarRepartidores() {
 
 
 // --- CAMBIO DE REPARTIDOR SELECCIONADO ---
-
 async function cambiarRepartidor() {
     var newId = document.getElementById("selRepartidor").value;
     if (newId === currentRepartidorId) return;
@@ -2770,27 +2769,26 @@ async function cambiarRepartidor() {
     if(gpsRealtimeChannel) db.removeChannel(gpsRealtimeChannel);
     
     if(currentRepartidorId) {
-        // 🔥 CONFIRMACIÓN: Buscar la última ubicación y centrar el mapa ahí
+        // Buscar la última ubicación en la tabla correcta (gps_tracking)
         const { data, error } = await db
-            .from('gps_locations')
+            .from('gps_tracking')
             .select('*')
-            .eq('device_id', currentRepartidorId)
-            .order('recorded_at', { ascending: false })
+            .eq('repartidor_id', currentRepartidorId) // Cambio de device_id a repartidor_id
+            .order('created_at', { ascending: false })
             .limit(1);
 
         if (!error && data && data.length > 0) {
-            // Si hay datos previos, dibujar el camión y hacer zoom
             moverVehiculo(data[0]);
             gpsMap.setView([parseFloat(data[0].lat), parseFloat(data[0].lng)], 15);
         } else {
-            // Si no hay datos, mostrar un aviso
-            alert("Sin datos de GPS aún. Abre la app en el celular con este repartidor y dale permisos de ubicación.");
+            alert("Sin datos de GPS aún. Abre la app en el celular con este repartidor.");
         }
 
-        // Empezar a escuchar en vivo
         escucharGPSRealtime(currentRepartidorId);
     }
 }
+
+	
 
 		
 	
@@ -2880,20 +2878,29 @@ async function eliminarMarcador(id) {
 }
 
 // --- SUSCRIPCIÓN A GPS REALTIME ---
-function escucharGPSRealtime(deviceId) {
+function escucharGPSRealtime(repartidorId) {
     if(!db) return;
-    gpsRealtimeChannel = db.channel('gps-channel-' + deviceId)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'gps_locations', filter: 'device_id=eq.'+deviceId }, payload => {
+    gpsRealtimeChannel = db.channel('gps-channel-' + repartidorId)
+    .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'gps_tracking', // Cambio de gps_locations a gps_tracking
+        filter: 'repartidor_id=eq.'+repartidorId // Cambio de device_id a repartidor_id
+    }, payload => {
         moverVehiculo(payload.new);
     })
     .subscribe();
 }
 
+
+
 // --- LÓGICA PRINCIPAL AL MOVERSE EL VEHÍCULO ---
 async function moverVehiculo(loc) {
     var lat = parseFloat(loc.lat);
     var lng = parseFloat(loc.lng);
-    var speed = parseFloat(loc.speed) || 0;
+    // Leemos la velocidad que manda el celular (suele venir en m/s, lo pasamos a km/h)
+    var speedMs = parseFloat(loc.velocidad) || 0; 
+    var speed = speedMs * 3.6; 
 
     document.getElementById("gpsSpeed").innerText = speed.toFixed(0);
 
@@ -2904,17 +2911,17 @@ async function moverVehiculo(loc) {
         var truckIcon = L.divIcon({ html: '🚚', iconSize: [30, 30], className: '' });
         vehiculoMarker = L.marker([lat, lng], { icon: truckIcon }).addTo(gpsMap);
     }
-	            // 🚀 SINCRONIZAR MINI-MAPA EN RESUMEN
-            if (dashMap) {
-                if (dashVehiculoMarker) {
-                    dashVehiculoMarker.setLatLng([lat, lng]);
-                } else {
-                    var dashTruckIcon = L.divIcon({ html: '🚚', iconSize: [24, 24], className: '' });
-                    dashVehiculoMarker = L.marker([lat, lng], { icon: dashTruckIcon }).addTo(dashMap);
-                }
-                // Centrar mini-mapa automáticamente
-                dashMap.setView([lat, lng], 14);
-            }
+    
+    // SINCRONIZAR MINI-MAPA EN RESUMEN
+    if (dashMap) {
+        if (dashVehiculoMarker) {
+            dashVehiculoMarker.setLatLng([lat, lng]);
+        } else {
+            var dashTruckIcon = L.divIcon({ html: '🚚', iconSize: [24, 24], className: '' });
+            dashVehiculoMarker = L.marker([lat, lng], { icon: dashTruckIcon }).addTo(dashMap);
+        }
+        dashMap.setView([lat, lng], 14);
+    }
 
     // Centrar mapa si está activado el seguimiento
     if (seguirVehiculo) gpsMap.setView([lat, lng], 17);
@@ -2932,7 +2939,6 @@ async function moverVehiculo(loc) {
             document.getElementById("gpsAlertText").innerText = "🚨 Llegando a " + m.nombre;
             document.getElementById("gpsAlertSubtext").innerText = "Zona de descarga. Detención estimada: " + m.tiempo_detencion_min + " min.";
             
-            // Si acabamos de entrar al punto, registrar llegada en BD y arrancar timer
             if (currentAlertId !== m.id) {
                 currentAlertId = m.id;
                 stopStartTime = Date.now();
@@ -2941,12 +2947,12 @@ async function moverVehiculo(loc) {
                 if(data && data[0]) window['currentAlertDbId'] = data[0].id;
             }
             
-            // Si está a velocidad 0 dentro del punto, mostrar cronómetro rojo
-            if(speed === 0 && currentAlertId === m.id) {
+            // Si está a menos de 3 km/h dentro del punto, mostrar cronómetro rojo
+            if(speed < 3 && currentAlertId === m.id) {
                 document.getElementById("gpsStopBox").classList.remove("hidden");
             } else {
                 document.getElementById("gpsStopBox").classList.add("hidden");
-                stopStartTime = Date.now(); // Si se mueve, resetear el inicio del conteo de 0
+                stopStartTime = Date.now(); 
             }
             break;
         }
@@ -2958,7 +2964,6 @@ async function moverVehiculo(loc) {
         document.getElementById("gpsStopBox").classList.add("hidden");
         resetStopTimer();
         
-        // Si había una alerta abierta, registrar la salida en BD
         if (currentAlertId !== null && window['currentAlertDbId']) {
             await db.from("gps_alerts").update({ salida: new Date().toISOString() }).eq("id", window['currentAlertDbId']);
             currentAlertId = null;
@@ -2966,6 +2971,7 @@ async function moverVehiculo(loc) {
         }
     }
 }
+
 
 // --- FUNCIONES DEL CRONÓMETRO DE DETENCIÓN ---
 function iniciarStopTimer() {
@@ -2999,18 +3005,19 @@ function toggleSeguir() {
 }
 
 // --- HISTORIAL E INFORME DEL DÍA ---
+
 async function loadHistorialGPS() {
     if(!db || !currentRepartidorId) { alert("Seleccione un repartidor en la pestaña 'En Vivo' primero."); return; }
     
     document.getElementById("histFecha").innerText = new Date().toLocaleDateString('es-UY');
     var hoy = new Date().toISOString().split("T")[0];
 
-    // 1. Dibujar Ruta Histórica
-    const { data: ruta } = await db.from("gps_locations").select("*").eq("device_id", currentRepartidorId).gte("created_at", hoy + "T00:00:00").lte("created_at", hoy + "T23:59:59").order("created_at");
+    // Dibujar Ruta Histórica desde gps_tracking
+    const { data: ruta } = await db.from("gps_tracking").select("*").eq("repartidor_id", currentRepartidorId).gte("created_at", hoy + "T00:00:00").lte("created_at", hoy + "T23:59:59").order("created_at");
     
     if (!gpsMapHist) {
-	gpsMapHist = L.map('gpsMapHist').setView([-34.4833, -54.3333], 14);       
-         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap contributors © CARTO' }).addTo(gpsMapHist);
+        gpsMapHist = L.map('gpsMapHist').setView([-34.4833, -54.3333], 14);       
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap contributors © CARTO' }).addTo(gpsMapHist);
     }
     if(histLayer) gpsMapHist.removeLayer(histLayer);
     histLayer = L.layerGroup().addTo(gpsMapHist);
@@ -3020,15 +3027,17 @@ async function loadHistorialGPS() {
         L.polyline(coords, {color: 'blue', weight: 3}).addTo(histLayer);
         gpsMapHist.fitBounds(coords);
 
-        // Marcar paradas (Velocidad 0) en el mapa de historial
+        // Marcar paradas (Velocidad menor a 3 km/h) en el mapa
         ruta.forEach(function(r) {
-            if(parseFloat(r.speed) === 0) {
+            var speedMs = parseFloat(r.velocidad) || 0;
+            var speedKmh = speedMs * 3.6;
+            if(speedKmh < 3) {
                 L.circleMarker([r.lat, r.lng], {radius: 4, color: 'red', fillColor: 'red'}).addTo(histLayer).bindPopup("Detenido a las " + new Date(r.created_at).toLocaleTimeString('es-UY', {hour:'2-digit', minute:'2-digit'}));
             }
         });
     }
 
-    // 2. LÓGICA DE INFORME DE VISITAS (PUNTOS VISITADOS VS NO VISITADOS)
+    // LÓGICA DE INFORME DE VISITAS
     const { data: marcadores } = await db.from("gps_markers").select("*").order("nombre");
     const { data: alertas } = await db.from("gps_alerts").select("*").eq("device_id", currentRepartidorId).gte("llegada", hoy + "T00:00:00").order("llegada");
     
@@ -3038,8 +3047,6 @@ async function loadHistorialGPS() {
     if (marcadores && marcadores.length > 0) {
         marcadores.forEach(function(m) {
             var tr = document.createElement("tr");
-            
-            // Buscar si hay alerta para este marcador hoy
             var visita = alertas ? alertas.find(a => a.marker_id === m.id) : null;
             var visitado = false;
             var minsReales = 0;
@@ -3047,14 +3054,7 @@ async function loadHistorialGPS() {
 
             if (visita && visita.salida) {
                 minsReales = Math.round((new Date(visita.salida) - new Date(visita.llegada)) / 60000);
-                
-                // REGLA DE NEGOCIO: Velocidad 0 (estuvo) y más de 3 minutos detenido
-                if (minsReales >= 3) {
-                    visitado = true;
-                    estado = "OK";
-                } else {
-                    estado = "Paso rápido (< 3 min)";
-                }
+                if (minsReales >= 3) { visitado = true; estado = "OK"; } else { estado = "Paso rápido (< 3 min)"; }
             }
 
             tr.innerHTML = `
@@ -3065,10 +3065,9 @@ async function loadHistorialGPS() {
             `;
             tbody.appendChild(tr);
         });
-    } else {
-        tbody.innerHTML = "<tr><td colspan='4' class='p-4 text-center text-gray-400'>No hay marcadores registrados en el sistema.</td></tr>";
     }
 }
+
 
 // --- IMPRIMIR INFORME ---
 function imprimirHistorial() {
