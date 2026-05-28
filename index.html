@@ -1320,41 +1320,22 @@ async function eliminarRepartidor(id) {
         loadRepartidoresWeb(); 
     }
 }
-
-
-       // ==========================================
-// MÓDULO GPS EN VIVO - CÓDIGO DEFINITIVO
 // ==========================================
-var gpsMap = null, gpsMapHist = null, dashMap = null;
-var vehiculosEnVivo = {}; 
-var dashMarkers = {};
+// MÓDULO GPS EN VIVO - SIN LÍNEAS EN VIVO
+// ==========================================
+var gpsMap = null, gpsMapHist = null;
+var vehiculosEnVivo = {}; // Guarda los marcadores de cada camión
 var histLayers = {}, poisLayer = null;
 var marcadoresCache = [];
 var currentRepartidorId = null;
 var gpsRealtimeChannel = null;
 
-// Colores para diferenciar los repartidores
+// Colores para diferenciar los repartidores (Azul, Rojo, Verde, Naranja, Violeta, Rosa, Cyan, Índigo)
 var repartidorColores = ['#2563EB', '#DC2626', '#16A34A', '#D97706', '#7C3AED', '#DB2777', '#0891B2', '#4338CA'];
 
-// Variables de estado en vivo
-var repStates = {}; // { repId: { isStopped: bool, stopStart: Date, currentMarker: id|null, events: [] } }
-
-        if (tab === 'vivo') {
-    document.getElementById("gpsVivo").classList.remove("hidden");
-    document.getElementById("tabGPSVivo").className = "py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600";
-    
-    // Inicializar o refrescar mapa
-    if (!gpsMap && document.getElementById("gpsMap")) {
-        initGPSMap();
-    } else if (gpsMap) {
-        setTimeout(function(){ gpsMap.invalidateSize(); }, 300);
-    }
-}
-        function mostrarTabGPS(tab) {
+function mostrarTabGPS(tab) {
     document.getElementById("gpsVivo").classList.add("hidden");
     document.getElementById("gpsHistorial").classList.add("hidden");
-    
-    // Estilos de pestañas normales
     document.getElementById("tabGPSVivo").className = "py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent";
     document.getElementById("tabGPSHist").className = "py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent";
 
@@ -1374,70 +1355,9 @@ var repStates = {}; // { repId: { isStopped: bool, stopStart: Date, currentMarke
         loadHistorialGPS();
     }
 }
-   
-async function cargarRepartidoresGPS() {
-    if(!db) return;
-    const { data, error } = await db.from("repartidores").select("id, nombre").order("nombre");
-    if (error) { console.error("Error cargando repartidores GPS:", error); return; }
-    
-    repartidoresCache = data || [];
-    var sel = document.getElementById("selRepartidor");
-    sel.innerHTML = '<option value="">-- Seleccione un vehículo --</option>';
-    
-    if (data && data.length > 0) {
-        data.forEach(function(r) {
-            var opt = document.createElement("option");
-            opt.value = r.id;
-            opt.innerText = r.nombre;
-            sel.appendChild(opt);
-        });
-    }
 
-    // 🔥 RECUPERAR SELECCIÓN GUARDADA (Sobrevive a caídas y refrescos)
-    var savedId = localStorage.getItem('gps_repartidor_id');
-    if (savedId) {
-        sel.value = savedId;
-        confirmarRepartidorGPS(); // Confirmar automáticamente al cargar
-    }
-}
-
-function confirmarRepartidorGPS() {
-    var sel = document.getElementById("selRepartidor");
-    var selectedId = sel.value;
-    if (!selectedId) { alert("Seleccioná un repartidor primero."); return; }
-    
-    localStorage.setItem('gps_repartidor_id', selectedId);
-    currentRepartidorId = selectedId;
-    
-    sel.disabled = true;
-    document.getElementById("btnConfirmarRep").classList.add("hidden");
-    document.getElementById("btnModificarRep").classList.remove("hidden");
-    
-    var nombreSeleccionado = sel.options[sel.selectedIndex].text;
-    var txtActivo = document.getElementById("txtNombreRepActivo");
-    txtActivo.innerText = "🟢 En seguimiento: " + nombreSeleccionado;
-    txtActivo.classList.remove("hidden");
-
-    if (vehiculosEnVivo[currentRepartidorId] && gpsMap) {
-        gpsMap.setView(vehiculosEnVivo[currentRepartidorId].getLatLng(), 16);
-    }
-}
-
-function modificarRepartidorGPS() {
-    localStorage.removeItem('gps_repartidor_id');
-    currentRepartidorId = null;
-    
-    var sel = document.getElementById("selRepartidor");
-    sel.disabled = false;
-    document.getElementById("btnConfirmarRep").classList.remove("hidden");
-    document.getElementById("btnModificarRep").classList.add("hidden");
-    document.getElementById("txtNombreRepActivo").classList.add("hidden");
-}
-
-
-        function initGPSMap() {
+function initGPSMap() {
     if(!document.getElementById("gpsMap")) return;
-    
     gpsMap = L.map('gpsMap').setView([-34.4833, -54.3333], 14);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(gpsMap);
     poisLayer = L.layerGroup().addTo(gpsMap);
@@ -1447,30 +1367,52 @@ function modificarRepartidorGPS() {
         document.getElementById("mkLng").value = e.latlng.lng.toFixed(6);
     });
     
-    // FORZAR TAMAÑO DEL MAPA (Soluciona el bug de pantalla gris)
-    setTimeout(function(){ 
-        gpsMap.invalidateSize(); 
-    }, 300);
-    
+    setTimeout(function(){ gpsMap.invalidateSize(); }, 300);
     loadMarcadores(); 
     escucharGPSRealtimeGlobal();
 }
 
 async function cargarRepartidoresGPS() {
     if(!db) return;
-    const { data } = await db.from("repartidores").select("id, nombre").order("nombre");
+    const { data, error } = await db.from("repartidores").select("id, nombre").order("nombre");
+    if (error) { console.error("Error:", error); return; }
     repartidoresCache = data || [];
     var sel = document.getElementById("selRepartidor");
-    sel.innerHTML = '<option value="">-- Todos los Vehículos --</option>';
-    if(data) { data.forEach(function(r) { sel.innerHTML += '<option value="'+r.id+'">'+r.nombre+'</option>'; }); }
+    sel.innerHTML = '<option value="">-- Seleccione un vehículo --</option>';
+    if (data && data.length > 0) {
+        data.forEach(function(r) { sel.innerHTML += '<option value="'+r.id+'">'+r.nombre+'</option>'; });
+    }
+    var savedId = localStorage.getItem('gps_repartidor_id');
+    if (savedId) { sel.value = savedId; confirmarRepartidorGPS(); }
 }
 
-function cambiarRepartidor() {
-    currentRepartidorId = document.getElementById("selRepartidor").value;
-    if(currentRepartidorId && vehiculosEnVivo[currentRepartidorId]) {
-        var latlng = vehiculosEnVivo[currentRepartidorId].getLatLng();
-        gpsMap.setView(latlng, 16);
+function confirmarRepartidorGPS() {
+    var sel = document.getElementById("selRepartidor");
+    var selectedId = sel.value;
+    if (!selectedId) { return; }
+    localStorage.setItem('gps_repartidor_id', selectedId);
+    currentRepartidorId = selectedId;
+    sel.disabled = true;
+    document.getElementById("btnConfirmarRep").classList.add("hidden");
+    document.getElementById("btnModificarRep").classList.remove("hidden");
+    var nombreSeleccionado = sel.options[sel.selectedIndex].text;
+    document.getElementById("txtNombreRepActivo").innerText = "🟢 En seguimiento: " + nombreSeleccionado;
+    document.getElementById("txtNombreRepActivo").classList.remove("hidden");
+
+    // Si ya tenemos su posición en el mapa, centramos ahí
+    if (vehiculosEnVivo[currentRepartidorId] && gpsMap) {
+        gpsMap.setView(vehiculosEnVivo[currentRepartidorId].getLatLng(), 16);
     }
+}
+
+function modificarRepartidorGPS() {
+    localStorage.removeItem('gps_repartidor_id');
+    currentRepartidorId = null;
+    var sel = document.getElementById("selRepartidor");
+    sel.disabled = false;
+    document.getElementById("btnConfirmarRep").classList.remove("hidden");
+    document.getElementById("btnModificarRep").classList.add("hidden");
+    document.getElementById("txtNombreRepActivo").classList.add("hidden");
 }
 
 function escucharGPSRealtimeGlobal() {
@@ -1484,211 +1426,145 @@ function escucharGPSRealtimeGlobal() {
 
 async function procesarPuntoGPS(loc) {
     var repId = String(loc.repartidor_id);
-    var lat = parseFloat(loc.lat); var lng = parseFloat(loc.lng);
-    var speedMs = parseFloat(loc.velocidad) || 0; var speedKmh = speedMs * 3.6;
-    var repIndex = repartidoresCache.findIndex(r => String(r.id) === repId);
-    var color = repartidorColores[repIndex % repartidorColores.length] || '#000000';
-    var nombreRep = repartidoresCache[repIndex] ? repartidoresCache[repIndex].nombre : 'Desconocido';
-
-    // Inicializar estado del repartidor si no existe
-    if (!repStates[repId]) {
-        repStates[repId] = { isStopped: false, stopStart: null, currentMarker: null, lastSpeed: 0, loggedLongStop: false };
+    var lat = parseFloat(loc.lat); 
+    var lng = parseFloat(loc.lng);
+    var speedMs = parseFloat(loc.velocidad) || 0; 
+    var speedKmh = speedMs * 3.6;
+    
+    // Buscar nombre y color del repartidor
+    var repIndex = -1;
+    var nombreRep = "Desconocido";
+    var color = "#000000";
+    for (var i = 0; i < repartidoresCache.length; i++) {
+        if (String(repartidoresCache[i].id) === repId) {
+            repIndex = i;
+            nombreRep = repartidoresCache[i].nombre;
+            color = repartidorColores[i % repartidorColores.length];
+            break;
+        }
     }
-    var state = repStates[repId];
 
-    // 1. Mover o crear camión en el mapa GPS (SIN línea, solo el ícono)
+    // 1. CREAR O MOVER EL ÍCONO DEL CAMIÓN (SIN LÍNEAS)
     if (!vehiculosEnVivo[repId]) {
-        var truckIcon = L.divIcon({ html: `<div style="color:${color}; font-size:28px; filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.5));">🚚</div>`, iconSize: [28, 28], className: '' });
+        var truckIcon = L.divIcon({ 
+            html: `<div style="color:${color}; font-size:32px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));">🚚</div>`, 
+            iconSize: [32, 32], 
+            className: '' 
+        });
         vehiculosEnVivo[repId] = L.marker([lat, lng], { icon: truckIcon }).addTo(gpsMap).bindPopup(`<b style="color:${color}">${nombreRep}</b>`);
     } else { 
         vehiculosEnVivo[repId].setLatLng([lat, lng]); 
     }
 
-    // 2. Mover en Dashboard (si existe)
-    if (dashMap) {
-        if (dashMarkers[repId]) { dashMarkers[repId].setLatLng([lat, lng]); } 
-        else { 
+    // 2. ACTUALIZAR EL MAPA DEL RESUMEN (DASHBOARD) TAMBIÉN
+    if (typeof dashMap !== 'undefined' && dashMap) {
+        if (typeof dashMarkers !== 'undefined' && dashMarkers[repId]) { 
+            dashMarkers[repId].setLatLng([lat, lng]); 
+        } else { 
+            if(typeof dashMarkers === 'undefined') dashMarkers = {};
             var dIcon = L.divIcon({ html: `<div style="color:${color}; font-size:20px;">🚚</div>`, iconSize: [20, 20], className: '' }); 
             dashMarkers[repId] = L.marker([lat, lng], { icon: dIcon }).addTo(dashMap); 
         }
-        if (repId === String(currentRepartidorId)) dashMap.setView([lat, lng], 14);
     }
 
-    // 3. Lógica de Velocidad y Geocercas (Solo para el seleccionado en el menú)
+    // 3. LÓGICA EXCLUSIVA DEL REPARTIDOR SELECCIONADO (Velocidad y Centrado)
     if (repId === String(currentRepartidorId)) {
         document.getElementById("gpsSpeed").innerText = speedKmh.toFixed(0);
-        gpsMap.setView([lat, lng], 16);
+        gpsMap.setView([lat, lng], 16); // Sigue al camión
 
-        // Detectar si está en una geoferca (20m)
-        var enGeocerca = null;
+        // Lógica de Geocercas (Alertas de Puntos)
         for (var i = 0; i < marcadoresCache.length; i++) {
             var m = marcadoresCache[i];
             if (getDistance(lat, lng, parseFloat(m.lat), parseFloat(m.lng)) <= 20) {
-                enGeocerca = m;
-                break;
-            }
-        }
-
-        var horaActual = new Date().toLocaleTimeString('es-UY', {hour:'2-digit', minute:'2-digit'});
-
-        // Lógica de Detención y Paso
-        if (speedKmh < 3) { // Está detenido
-            if (!state.isStopped) { // Empezó a detenerse ahora
-                state.isStopped = true;
-                state.stopStart = new Date();
-                state.loggedLongStop = false;
-            }
-            
-            var minsDetenido = (new Date() - state.stopStart) / 60000;
-
-            if (enGeocerca) { // Detenido dentro de un comercio
                 document.getElementById("gpsAlertBox").classList.remove("hidden");
-                document.getElementById("gpsAlertText").innerText = "🚨 Detenido en " + enGeocerca.nombre;
-                document.getElementById("gpsAlertSubtext").innerText = "Lleva " + Math.round(minsDetenido) + " minutos.";
-                
-                if (minsDetenido >= 3 && !state.loggedLongStop) {
-                    agregarEventoVivo(horaActual, nombreRep, "✅ Detenido en " + enGeocerca.nombre + " (" + Math.round(minsDetenido) + " min)");
-                    state.loggedLongStop = true;
-                }
-            } else { // Detenido en la calle
+                document.getElementById("gpsAlertText").innerText = "🚨 En zona: " + m.nombre;
+                document.getElementById("gpsAlertSubtext").innerText = "Velocidad: " + speedKmh.toFixed(0) + " km/h";
+                break;
+            } else {
                 document.getElementById("gpsAlertBox").classList.add("hidden");
-                if (minsDetenido >= 3 && !state.loggedLongStop) {
-                    agregarEventoVivo(horaActual, nombreRep, "🛑 Detenido en calle por " + Math.round(minsDetenido) + " min");
-                    state.loggedLongStop = true;
-                }
             }
-        } else { // Está en movimiento
-            if (state.isStopped) { // Recién arranca
-                if (enGeocerca && state.stopStart) { // Si arranca estando en un comercio
-                    var duracion = Math.round((new Date() - state.stopStart) / 60000);
-                    if (duracion < 3) {
-                        agregarEventoVivo(horaActual, nombreRep, "🏃 Pasó por " + enGeocerca.nombre + " sin detenerse (< 3 min)");
-                    }
-                }
-                state.isStopped = false;
-                state.stopStart = null;
-            }
-            document.getElementById("gpsAlertBox").classList.add("hidden");
         }
     }
 }
 
-function agregarEventoVivo(hora, nombre, evento) {
-    var tbody = document.getElementById("tablaVivoGPS");
-    var tr = document.createElement("tr");
-    tr.className = "border-b hover:bg-gray-50";
-    tr.innerHTML = `<td class="p-1 border">${hora}</td><td class="p-1 border font-bold">${nombre}</td><td class="p-1 border">${evento}</td>`;
-    tbody.insertBefore(tr, tbody.firstChild); // Insertar arriba
-}
-
-// --- HISTORIAL ---
+// --- HISTORIAL (Aquí SÍ se dibujan las líneas de recorrido) ---
 async function loadHistorialGPS() {
-    if(!db) return;
+    if(!db || repartidoresCache.length === 0) return;
     document.getElementById("histFecha").innerText = new Date().toLocaleDateString('es-UY');
     var hoy = new Date().toISOString().split("T")[0];
-
+    
     if (!gpsMapHist) { 
         gpsMapHist = L.map('gpsMapHist').setView([-34.4833, -54.3333], 14); 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(gpsMapHist); 
     }
-    
-    // Limpiar capas anteriores
-    for(var id in histLayers) { gpsMapHist.removeLayer(histLayers[id]); }
+    for(var id in histLayers) { if(gpsMapHist.hasLayer(histLayers[id])) gpsMapHist.removeLayer(histLayers[id]); }
     histLayers = {};
 
     const { data: ruta } = await db.from("gps_tracking").select("*").gte("created_at", hoy + "T00:00:00").lte("created_at", hoy + "T23:59:59").order("created_at", { ascending: true });
     const { data: marcadores } = await db.from("gps_markers").select("*").order("nombre");
-
     var tbody = document.getElementById("tablaHistorialGPS"); tbody.innerHTML = "";
 
     if (ruta && ruta.length > 0) {
-        // Agrupar puntos por repartidor
         var puntosPorRep = {};
-        ruta.forEach(p => {
-            var rId = String(p.repartidor_id);
-            if (!puntosPorRep[rId]) puntosPorRep[rId] = [];
-            puntosPorRep[rId].push(p);
-        });
+        ruta.forEach(p => { var rId = String(p.repartidor_id); if (!puntosPorRep[rId]) puntosPorRep[rId] = []; puntosPorRep[rId].push(p); });
 
-        // Dibujar líneas por repartidor y calcular visitas
         for (var rId in puntosPorRep) {
             var puntos = puntosPorRep[rId];
             var repIndex = repartidoresCache.findIndex(r => String(r.id) === rId);
             var color = repartidorColores[repIndex % repartidorColores.length] || '#000000';
             var nombreRep = repartidoresCache[repIndex] ? repartidoresCache[repIndex].nombre : 'Desconocido';
 
-            // Dibujar línea de recorrido
+            // DIBUJAR LÍNEA DE RECORRIDO (Solo en historial)
             var coords = puntos.map(p => [parseFloat(p.lat), parseFloat(p.lng)]);
             histLayers[rId] = L.layerGroup().addTo(gpsMapHist);
             L.polyline(coords, {color: color, weight: 4, opacity: 0.7}).addTo(histLayers[rId]);
-            
-            // Cálculo de paradas y visitas a marcadores
-            var enGeocerca = {}; // { markerId: timestampLlegada }
-            var visitas = {};    // { markerId: { visitado: bool, mins: 0 } }
+
+            // Calcular visitas
+            var enGeocerca = {}; var visitas = {};
             if(marcadores) marcadores.forEach(m => visitas[m.id] = { visitado: false, mins: 0 });
-
             for (var i = 0; i < puntos.length; i++) {
-                var p = puntos[i];
-                var speedKmh = (parseFloat(p.velocidad) || 0) * 3.6;
-                var foundGeo = null;
-
-                if(marcadores) {
-                    marcadores.forEach(m => {
-                        if (getDistance(parseFloat(p.lat), parseFloat(p.lng), parseFloat(m.lat), parseFloat(m.lng)) <= 20) {
-                            foundGeo = m;
-                        }
-                    });
-                }
-
-                if (foundGeo) {
-                    if (!enGeocerca[foundGeo.id]) { enGeocerca[foundGeo.id] = new Date(p.created_at); }
-                } else {
-                    for (var geoId in enGeocerca) {
-                        var exitTime = new Date(p.created_at);
-                        var duration = (exitTime - enGeocerca[geoId]) / 60000;
-                        if (duration >= 3 && duration > visitas[geoId].mins) {
-                            visitas[geoId] = { visitado: true, mins: Math.round(duration) };
-                        }
-                        delete enGeocerca[geoId];
-                    }
-                }
+                var p = puntos[i]; var foundGeo = null;
+                if(marcadores) marcadores.forEach(m => { if (getDistance(parseFloat(p.lat), parseFloat(p.lng), parseFloat(m.lat), parseFloat(m.lng)) <= 20) foundGeo = m; });
+                if (foundGeo) { if (!enGeocerca[foundGeo.id]) enGeocerca[foundGeo.id] = new Date(p.created_at); } 
+                else { for (var geoId in enGeocerca) { var dur = (new Date(p.created_at) - enGeocerca[geoId]) / 60000; if (dur >= 3 && dur > visitas[geoId].mins) visitas[geoId] = { visitado: true, mins: Math.round(dur) }; delete enGeocerca[geoId]; } }
             }
-
-            // Renderizar tabla de historial
+            
+            // Pintar tabla
             if(marcadores) {
-                marcadores.forEach(function(m) {
+                marcadores.forEach(m => {
                     var vis = visitas[m.id] || { visitado: false, mins: 0 };
-                    var estadoTexto = "No Visitado";
-                    if (vis.visitado) estadoTexto = "OK (Detenido > 3 min)";
-                    else if (vis.mins > 0) estadoTexto = "Paso rápido (< 3 min)";
-
-                    var tr = document.createElement("tr");
-                    tr.innerHTML = `<td class="p-2 border"><span class="font-bold" style="color:${color}">${nombreRep}</span></td>
-                    <td class="p-2 border font-bold">${m.nombre}</td>
-                    <td class="p-2 border text-center font-bold ${vis.visitado ? 'text-green-600' : 'text-red-600'}">${vis.visitado ? '✅ SÍ' : '❌ NO'}</td>
-                    <td class="p-2 border text-center">${vis.mins > 0 ? vis.mins + ' min' : '-'}</td>
-                    <td class="p-2 border text-center"><span class="px-2 py-1 rounded text-xs font-bold ${vis.visitado ? 'bg-green-100 text-green-800' : (vis.mins > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800')}">${estadoTexto}</span></td>`;
-                    tbody.appendChild(tr);
+                    var estado = vis.visitado ? "OK (> 3 min)" : (vis.mins > 0 ? "Paso rápido" : "No Visitado");
+                    tbody.innerHTML += `<tr><td class="p-2 border"><span class="font-bold" style="color:${color}">${nombreRep}</span></td><td class="p-2 border font-bold">${m.nombre}</td><td class="p-2 border text-center font-bold ${vis.visitado?'text-green-600':'text-red-600'}">${vis.visitado?'✅ SÍ':'❌ NO'}</td><td class="p-2 border text-center">${vis.mins>0?vis.mins+' min':'-'}</td><td class="p-2 border text-center text-xs">${estado}</td></tr>`;
                 });
             }
         }
         gpsMapHist.fitBounds(Object.values(puntosPorRep).flat().map(p => [parseFloat(p.lat), parseFloat(p.lng)]));
-    } else {
-        tbody.innerHTML = "<tr><td colspan='5' class='p-4 text-center text-gray-400'>Sin datos de ruta hoy.</td></tr>";
-    }
-    setTimeout(function(){ gpsMapHist.invalidateSize(); }, 100);
+    } else { tbody.innerHTML = "<tr><td colspan='5' class='p-4 text-center text-gray-400'>Sin datos hoy.</td></tr>"; }
+    setTimeout(function(){ gpsMapHist.invalidateSize(); }, 400);
 }
 
 function imprimirHistorialGPS() { window.print(); }
 
-// --- UTILIDADES GPS ---
 function getDistance(lat1, lon1, lat2, lon2) { var R = 6371000; var dLat = (lat2 - lat1) * Math.PI / 180; var dLon = (lon2 - lon1) * Math.PI / 180; var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2); var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c; }
 
-async function loadMarcadores() { if(!db) return; poisLayer.clearLayers(); const { data } = await db.from("gps_markers").select("*").order("id"); marcadoresCache = data || []; marcadoresCache.forEach(m => { L.circle([m.lat, m.lng], { radius: 20, color: 'red', fillColor: '#fca5a5', fillOpacity: 0.3 }).addTo(poisLayer); L.marker([m.lat, m.lng]).addTo(poisLayer).bindPopup(m.nombre); }); }
+async function loadMarcadores() { 
+    if(!db || !poisLayer) return; 
+    poisLayer.clearLayers(); 
+    const { data } = await db.from("gps_markers").select("*").order("id"); 
+    marcadoresCache = data || []; 
+    var listaDiv = document.getElementById("listaMarcadores"); 
+    if(listaDiv) listaDiv.innerHTML = "";
+    marcadoresCache.forEach(m => { 
+        L.circle([m.lat, m.lng], { radius: 20, color: 'red', fillColor: '#fca5a5', fillOpacity: 0.3 }).addTo(poisLayer); 
+        L.marker([m.lat, m.lng]).addTo(poisLayer).bindPopup(m.nombre); 
+        if(listaDiv) listaDiv.innerHTML += `<div class="p-2 bg-gray-50 rounded border flex justify-between items-center"><span class="font-bold">${m.nombre}</span><button onclick="eliminarMarcador(${m.id})" class="text-red-500 font-bold">✕</button></div>`;
+    }); 
+}
 async function guardarMarcador() { var n = document.getElementById("mkNombre").value; var lat = parseFloat(document.getElementById("mkLat").value); var lng = parseFloat(document.getElementById("mkLng").value); if (!n || !lat || !lng) { alert("Complete nombre y ubicación."); return; } await db.from("gps_markers").insert([{ nombre: n, lat: lat, lng: lng, tiempo_detencion_min: 3 }]); document.getElementById("mkNombre").value = ""; document.getElementById("mkLat").value = ""; document.getElementById("mkLng").value = ""; alert("✅ Punto guardado."); loadMarcadores(); }
 async function eliminarMarcador(id) { if(!confirm("¿Eliminar punto?")) return; await db.from("gps_markers").delete().eq("id", id); loadMarcadores(); }
+//////
+     
 
-        
             // ==========================================
 // MÓDULO MARKETING IA (Completo)
 // ==========================================
