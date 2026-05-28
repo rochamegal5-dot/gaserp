@@ -270,13 +270,10 @@
     </div>
     <p id="txtNombreRepActivo" class="hidden mt-2 text-center text-green-700 font-extrabold text-sm">🟢 En seguimiento: -</p>
 </div>
-            
-
-    <!-- TAB EN VIVO -->
-        <div id="view-gps" class="view-section hidden">
+    <div id="view-gps" class="view-section hidden">
     <h2 class="text-2xl font-semibold text-gray-800 mb-4">📍 Rastreo Vehicular</h2>
     
-    <!-- Pestañas originales -->
+    <!-- Pestañas -->
     <div class="flex border-b border-gray-200 mb-4">
         <button onclick="mostrarTabGPS('vivo')" id="tabGPSVivo" class="py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600">📍 En Vivo</button>
         <button onclick="mostrarTabGPS('historial')" id="tabGPSHist" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent">📊 Historial del Día</button>
@@ -284,15 +281,18 @@
 
     <!-- TAB EN VIVO -->
     <div id="gpsVivo">
-        <div id="gpsAlertBox" class="hidden bg-orange-100 border-l-4 border-orange-500 text-orange-800 p-4 mb-4 rounded shadow-lg" role="alert">
-            <p class="font-bold text-xl" id="gpsAlertText">🚨 Alerta</p>
-            <p class="text-sm" id="gpsAlertSubtext">Zona de influencia.</p>
-        </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <!-- Mapa Vivo (3 columnas) -->
             <div class="lg:col-span-3 bg-white p-2 rounded-lg shadow-sm relative">
                 <div id="gpsMap" style="height: 550px; width: 100%; border-radius: 0.5rem; z-index: 1;"></div>
+                
+                <!-- Alerta FLOTANTE sobre el mapa (No empuja el mapa hacia abajo) -->
+                <div id="gpsAlertBox" class="hidden absolute top-4 left-4 z-10 bg-orange-100 border-l-4 border-orange-500 text-orange-800 p-3 rounded shadow-lg" role="alert" style="max-width: 300px;">
+                    <p class="font-bold text-base" id="gpsAlertText">🚨 Alerta</p>
+                    <p class="text-xs" id="gpsAlertSubtext">Zona de influencia.</p>
+                </div>
+
+                <!-- Velocidad FLOTANTE -->
                 <div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
                     <div class="bg-white bg-opacity-90 px-4 py-2 rounded-lg shadow-md text-center">
                         <p class="text-xs text-gray-500 font-bold">VELOCIDAD</p>
@@ -364,7 +364,8 @@
             </table>
         </div>
     </div>
-</div>
+</div>        
+////
    
           
             <!-- INICIO SECCIÓN FINANZAS COMPLETA -->
