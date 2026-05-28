@@ -64,8 +64,114 @@
 
             <div id="view-proveedores" class="view-section hidden"><h2 class="text-2xl font-semibold text-gray-800 mb-6">🚚 Proveedores y Remitos</h2><div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"><div class="bg-white p-6 rounded-lg shadow-sm"><h3 class="text-lg font-bold text-gray-700 mb-4">Datos del Proveedor</h3><input type="hidden" id="provIdEditando"><div class="grid grid-cols-1 gap-3"><div><label class="block text-sm font-medium text-gray-700">Nombre / Razón Social *</label><input type="text" id="provNombre" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm uppercase"></div><div><label class="block text-sm font-medium text-gray-700">RUT / CUIT</label><input type="text" id="provCuit" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm"></div><div><label class="block text-sm font-medium text-gray-700">Teléfono</label><input type="text" id="provTelefono" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm"></div><button onclick="guardarProveedor()" class="mt-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 font-bold cursor-pointer w-full">Guardar Proveedor</button></div></div><div class="bg-white p-6 rounded-lg shadow-sm"><h3 class="text-lg font-bold text-gray-700 mb-4">📥 Cargar Remito</h3><div class="grid grid-cols-2 gap-3 mb-4"><div><label class="block text-sm font-medium text-gray-700">Proveedor *</label><select id="remProvId" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white"></select></div><div><label class="block text-sm font-medium text-gray-700">Nº Remito *</label><input type="text" id="remNumero" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm"></div></div><input type="hidden" id="remProdId1"><div class="grid grid-cols-4 gap-2 mb-2 items-center bg-gray-50 p-2 rounded border"><div class="col-span-1 font-bold text-gray-800 text-sm">Garrafa 13kg</div><div><label class="block text-xs text-center text-green-700 font-bold">Entran</label><input type="number" id="remLlenas1" class="block w-full px-1 py-1 border rounded-md shadow-sm text-center" value="0"></div><div><label class="block text-xs text-center text-gray-700 font-bold">Salen Vac.</label><input type="number" id="remVacias1" class="block w-full px-1 py-1 border rounded-md shadow-sm text-center" value="0"></div><div><label class="block text-xs text-center text-red-700 font-bold">Defect.</label><input type="number" id="remDefect1" class="block w-full px-1 py-1 border rounded-md shadow-sm text-center" value="0"></div></div><input type="hidden" id="remProdId2"><div class="grid grid-cols-4 gap-2 mb-2 items-center bg-gray-50 p-2 rounded border"><div class="col-span-1 font-bold text-gray-800 text-sm">Garrafa 11kg</div><div><input type="number" id="remLlenas2" class="block w-full px-1 py-1 border rounded-md shadow-sm text-center" value="0"></div><div><input type="number" id="remVacias2" class="block w-full px-1 py-1 border rounded-md shadow-sm text-center" value="0"></div><div><input type="number" id="remDefect2" class="block w-full px-1 py-1 border rounded-md shadow-sm text-center" value="0"></div></div><button onclick="guardarRemito()" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 font-bold cursor-pointer w-full">📥 Procesar Remito</button></div></div><div class="bg-white p-6 rounded-lg shadow-sm"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2 border">Nombre</th><th class="p-2 border">RUT</th><th class="p-2 border">Teléfono</th><th class="p-2 border text-center">Acciones</th></tr></thead><tbody id="tablaProveedores"></tbody></table></div></div>
 
-            <div id="view-stock" class="view-section hidden"><h2 class="text-2xl font-semibold text-gray-800 mb-6">🗄️ Stock en Depósito</h2><div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"><div class="bg-white p-4 rounded-lg shadow-sm border-t-4 border-blue-500"><h3 class="text-gray-600 text-sm font-bold uppercase">🛢️ Garrafa 13kg</h3><div class="mt-3 space-y-1 text-sm"><div class="flex justify-between items-center"><span class="text-green-700 font-bold">Llenas</span><span id="sum13Llenas" class="text-lg font-extrabold text-green-700">0</span></div><div class="flex justify-between items-center"><span class="text-gray-700 font-bold">Vacías</span><span id="sum13Vacias" class="text-lg font-extrabold text-gray-700">0</span></div></div></div><div class="bg-white p-4 rounded-lg shadow-sm border-t-4 border-emerald-500"><h3 class="text-gray-600 text-sm font-bold uppercase">🛢️ Garrafa 11kg</h3><div class="mt-3 space-y-1 text-sm"><div class="flex justify-between items-center"><span class="text-green-700 font-bold">Llenas</span><span id="sum11Llenas" class="text-lg font-extrabold text-green-700">0</span></div><div class="flex justify-between items-center"><span class="text-gray-700 font-bold">Vacías</span><span id="sum11Vacias" class="text-lg font-extrabold text-gray-700">0</span></div></div></div></div><div class="bg-white p-6 rounded-lg shadow-sm mb-8"><h3 class="text-lg font-bold text-gray-700 mb-4">📊 Detalle</h3><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2 border">Producto</th><th class="p-2 border text-center text-green-700">Llenas</th><th class="p-2 border text-center text-gray-700">Vacías</th></tr></thead><tbody id="tablaStock"></tbody></table></div><div class="bg-white p-6 rounded-lg shadow-sm mb-8"><h3 class="text-lg font-bold text-gray-700 mb-2">⛽ Recargas (Tubo 43.5kg)</h3><div class="bg-gray-50 p-3 rounded-md border mb-4 flex items-center justify-between"><div><span class="block text-xs font-medium text-gray-700">Gas Restante</span><span id="gasRestanteTexto" class="text-2xl font-bold text-purple-700">43.5 kg</span></div><div class="w-1/2 bg-gray-200 rounded-full h-4"><div id="gasBarra" class="bg-purple-600 h-4 rounded-full transition-all duration-500" style="width: 100%"></div></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end"><div><label class="block text-sm font-medium text-gray-700">Kilos a Cargar</label><input type="number" id="recargaKilos" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm text-center" step="0.5" min="0.5" max="3" value="3"></div><button onclick="recargarGarrafa3kg()" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 font-bold cursor-pointer w-full">💨 Recargar</button><button onclick="cambiarTubo43()" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 font-bold cursor-pointer w-full">🔄 Cambiar Tubo</button></div></div></div>
-                     
+                        <div id="view-stock" class="view-section hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">🗄️ Stock en Depósito Central</h2>
+                
+                <!-- TARJETAS DE RESUMEN RÁPIDO -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-t-4 border-blue-500">
+                        <h3 class="text-gray-600 text-sm font-bold uppercase">🛢️ Garrafa 13kg</h3>
+                        <div class="mt-3 space-y-1 text-sm">
+                            <div class="flex justify-between items-center"><span class="text-green-700 font-bold">Llenas</span><span id="sum13Llenas" class="text-lg font-extrabold text-green-700">0</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-700 font-bold">Vacías</span><span id="sum13Vacias" class="text-lg font-extrabold text-gray-700">0</span></div>
+                            <div class="flex justify-between items-center"><span class="text-red-700 font-bold">Defect.</span><span id="sum13Defect" class="text-lg font-extrabold text-red-700">0</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-t-4 border-emerald-500">
+                        <h3 class="text-gray-600 text-sm font-bold uppercase">🛢️ Garrafa 11kg</h3>
+                        <div class="mt-3 space-y-1 text-sm">
+                            <div class="flex justify-between items-center"><span class="text-green-700 font-bold">Llenas</span><span id="sum11Llenas" class="text-lg font-extrabold text-green-700">0</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-700 font-bold">Vacías</span><span id="sum11Vacias" class="text-lg font-extrabold text-gray-700">0</span></div>
+                            <div class="flex justify-between items-center"><span class="text-red-700 font-bold">Defect.</span><span id="sum11Defect" class="text-lg font-extrabold text-red-700">0</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-t-4 border-indigo-500">
+                        <h3 class="text-gray-600 text-sm font-bold uppercase">🛢️ Tubos 45kg</h3>
+                        <div class="mt-3 space-y-1 text-sm">
+                            <div class="flex justify-between items-center"><span class="text-green-700 font-bold">Llenas</span><span id="sum45Llenas" class="text-lg font-extrabold text-green-700">0</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-700 font-bold">Vacías</span><span id="sum45Vacias" class="text-lg font-extrabold text-gray-700">0</span></div>
+                            <div class="flex justify-between items-center"><span class="text-red-700 font-bold">Defect.</span><span id="sum45Defect" class="text-lg font-extrabold text-red-700">0</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-t-4 border-purple-500">
+                        <h3 class="text-gray-600 text-sm font-bold uppercase">⛽ Tubos 43.5kg</h3>
+                        <div class="mt-3 space-y-1 text-sm">
+                            <div class="flex justify-between items-center"><span class="text-green-700 font-bold">Llenas</span><span id="sum43Llenas" class="text-lg font-extrabold text-green-700">0</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-700 font-bold">Vacías</span><span id="sum43Vacias" class="text-lg font-extrabold text-gray-700">0</span></div>
+                            <div class="flex justify-between items-center"><span class="text-red-700 font-bold">Defect.</span><span id="sum43Defect" class="text-lg font-extrabold text-red-700">0</span></div>
+                        </div>
+                    </div>
+                </div>
+              
+                <!-- DETALLE POR PRODUCTO -->
+                <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">📊 Detalle por Producto</h3>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="p-2 border">Producto</th>
+                                <th class="p-2 border text-center text-green-700">Llenas</th>
+                                <th class="p-2 border text-center text-gray-700">Vacías</th>
+                                <th class="p-2 border text-center text-red-700">Defect.</th>
+                                <th class="p-2 border text-center text-blue-700">Total Envases</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaStock"></tbody>
+                    </table>
+                </div>
+
+                <!-- AJUSTE MANUAL DE STOCK -->
+                <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
+                    <h3 class="text-lg font-bold text-gray-700 mb-2">⚠️ Ajuste Manual de Stock</h3>
+                    <p class="text-xs text-gray-500 mb-4">Usa esto solo para corregir diferencias físicas vs sistema (roturas, pérdidas, etc.).</p>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Producto</label>
+                            <select id="ajusteProdId" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Estado</label>
+                            <select id="ajusteEstado" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white">
+                                <option value="llena">Llena</option>
+                                <option value="vacia">Vacía</option>
+                                <option value="defectuosa">Defectuosa</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Movimiento</label>
+                            <select id="ajusteTipo" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-white">
+                                <option value="1">➕ Sumar</option>
+                                <option value="-1">➖ Restar</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Cantidad</label>
+                            <input type="number" id="ajusteCantidad" class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm text-center" value="1" min="1">
+                        </div>
+                        <button onclick="ejecutarAjusteStock()" class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 font-bold cursor-pointer w-full">Aplicar Ajuste</button>
+                    </div>
+                </div>
+
+                <!-- CONTROL DE TUBO ACTIVO 43.5KG -->
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-700 mb-2">⛽ Control de Recargas (Tubo 43.5kg)</h3>
+                    <p class="text-xs text-gray-500 mb-4">El gas baja automáticamente con cada venta de "Recarga 3kg". Use este botón solo para cambiar el tubo físico.</p>
+                    
+                    <div class="bg-gray-50 p-3 rounded-md border mb-4 flex items-center justify-between">
+                        <div>
+                            <span class="block text-xs font-medium text-gray-700">Gas Restante en Tubo</span>
+                            <span id="gasRestanteTexto" class="text-2xl font-bold text-purple-700">43.5 kg</span>
+                        </div>
+                        <div class="w-1/2 bg-gray-200 rounded-full h-4">
+                            <div id="gasBarra" class="bg-purple-600 h-4 rounded-full transition-all duration-500" style="width: 100%"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="cambiarTubo43()" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 font-bold cursor-pointer w-full">🔄 Cambiar Tubo (Pasa a Vacío)</button>
+                </div>
+            </div>
+            //
+          
                         <div id="view-ventas" class="view-section hidden">
                 <h2 class="text-2xl font-semibold text-gray-800 mb-6">💰 Punto de Venta</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -243,24 +349,273 @@
         async function loadClientes(forzar=false) { if(!db)return; if(clientesCache.length>0&&!forzar)return; var r=await db.from("clientes").select("*").order("id",{ascending:true}); clientesCache=r.data||[]; renderTablaCli(); }
         function renderTablaCli() { var tb=document.getElementById("tablaClientes"); tb.innerHTML=""; clientesCache.forEach(c => { tb.innerHTML+=`<tr><td class='p-2 border'>${c.nombre}</td><td class='p-2 border'>${c.telefono}</td><td class='p-2 border'>${c.tipo_cliente.replace('_',' ')}</td><td class='p-2 border text-xs'>${c.calle||''}</td><td class='p-2 border text-center'><button onclick='editarCliente(clientesCache.find(x=>x.id===${c.id}))' class='bg-yellow-500 text-white px-2 py-1 rounded text-xs mr-1'>Edit</button></td></tr>`; }); }
 
-        async function actualizarStock(prodId, estado, cantCambio, ubi='deposito') { var{data:act}=await db.from("stock_deposito").select("*").eq("producto_id",prodId).eq("estado_envase",estado).eq("ubicacion",ubi); if(act&&act.length>0){var nc=act[0].cantidad+cantCambio; if(nc<0)nc=0; await db.from("stock_deposito").update({cantidad:nc}).eq("id",act[0].id);}else if(cantCambio>0){await db.from("stock_deposito").insert([{producto_id:prodId,estado_envase:estado,cantidad:cantCambio,ubicacion:ubi}]);} }
-        
+         // ==========================================
+        // FUNCIÓN PEGAMENTO MAESTRA (Usada por todos los módulos)
+        // ==========================================
+        async function actualizarStock(productoId, estado, cantidadCambio, ubicacion = 'deposito') {
+            // Buscamos si ya hay stock de este producto/estado/ubicacion
+            var { data: actual } = await db.from("stock_deposito").select("*").eq("producto_id", productoId).eq("estado_envase", estado).eq("ubicacion", ubicacion);
+            
+            if (actual && actual.length > 0) {
+                // Si ya existe, sumamos o restamos
+                var nuevaCant = actual[0].cantidad + cantidadCambio;
+                if (nuevaCant < 0) nuevaCant = 0; // Seguridad para no tener stock negativo
+                await db.from("stock_deposito").update({ cantidad: nuevaCant }).eq("id", actual[0].id);
+            } else if (cantidadCambio > 0) {
+                // Si no existe y es una entrada (positivo), lo creamos
+                await db.from("stock_deposito").insert([{ producto_id: productoId, estado_envase: estado, cantidad: cantidadCambio, ubicacion: ubicacion }]);
+            }
+        }
+
+     
         async function guardarProveedor() { if(!db)return; var idE=document.getElementById("provIdEditando").value; var n=document.getElementById("provNombre").value; var c=document.getElementById("provCuit").value; var t=document.getElementById("provTelefono").value; if(!n){alert("Nombre obligatorio");return;} var datos={nombre:n,cuit:c,telefono:t}; var res; if(idE){res=await db.from("proveedores").update(datos).eq("id",idE);}else{res=await db.from("proveedores").insert([datos]);} if(res.error)alert(res.error.message); else{alert("¡Guardado!");document.getElementById("provIdEditando").value="";document.getElementById("provNombre").value="";document.getElementById("provCuit").value="";document.getElementById("provTelefono").value="";loadProveedores();} }
         async function loadProveedores() { if(!db)return; var r=await db.from("proveedores").select("*").order("id"); proveedoresCache=r.data||[]; var tb=document.getElementById("tablaProveedores"); tb.innerHTML=""; proveedoresCache.forEach(p => { tb.innerHTML+=`<tr><td class='p-2 border'>${p.nombre}</td><td class='p-2 border'>${p.cuit||''}</td><td class='p-2 border'>${p.telefono||''}</td><td class='p-2 border text-center'><button onclick='eliminarProveedor(${p.id})' class='bg-red-600 text-white px-2 py-1 rounded text-xs'>Del</button></td></tr>`; }); cargarIdsRemitos(); }
         function cargarIdsRemitos() { var s=document.getElementById("remProvId"); s.innerHTML="<option value=''>-- Seleccionar --</option>"; proveedoresCache.forEach(p=>s.innerHTML+=`<option value="${p.id}">${p.nombre}</option>`); var p13=productosCache.find(p=>p.tipo_producto==='garrafa_13'); var p11=productosCache.find(p=>p.tipo_producto==='garrafa_11'); if(p13)document.getElementById("remProdId1").value=p13.id; if(p11)document.getElementById("remProdId2").value=p11.id; }
         async function guardarRemito() { if(!db)return; var pid=document.getElementById("remProvId").value; var nro=document.getElementById("remNumero").value; if(!pid||!nro){alert("Completa datos");return;} var cab={proveedor_id:pid,nro_remito:nro,total:0,estado_pago:'pendiente'}; var rc=await db.from("remitos_proveedor").insert([cab]).select(); if(rc.error){alert(rc.error.message);return;} var rid=rc.data[0].id; for(var i=1;i<=2;i++){var pr=document.getElementById("remProdId"+i).value; var ll=parseInt(document.getElementById("remLlenas"+i).value)||0; var va=parseInt(document.getElementById("remVacias"+i).value)||0; if(ll>0){await actualizarStock(pr,'llena',ll,'deposito');} if(va>0){await actualizarStock(pr,'vacia',-va,'deposito');} document.getElementById("remLlenas"+i).value=0; document.getElementById("remVacias"+i).value=0;} document.getElementById("remNumero").value=""; alert("✅ Remito procesado!"); loadStats(); }
         async function eliminarProveedor(id) { if(!db)return; if(confirm("¿Eliminar?")){await db.from("proveedores").delete().eq("id",id); loadProveedores();} }
 
-        async function loadStock() { if(!db)return; const{data}=await db.from("stock_deposito").select("cantidad,estado_envase,productos(id,nombre,tipo_producto)").eq("ubicacion","deposito"); var tb=document.getElementById("tablaStock"); tb.innerHTML=""; var sg={}; document.getElementById("sum13Llenas").innerText=0; document.getElementById("sum13Vacias").innerText=0; document.getElementById("sum11Llenas").innerText=0; document.getElementById("sum11Vacias").innerText=0; if(data){data.forEach(i=>{if(!i.productos)return; var pid=i.productos.id; if(!sg[pid])sg[pid]={nombre:i.productos.nombre,tipo:i.productos.tipo_producto,llenas:0,vacias:0}; if(i.estado_envase==='llena')sg[pid].llenas+=i.cantidad; if(i.estado_envase==='vacia')sg[pid].vacias+=i.cantidad;});} for(var pid in sg){var p=sg[pid]; tb.innerHTML+=`<tr><td class='p-2 border font-bold'>${p.nombre}</td><td class='p-2 border text-center text-green-700'>${p.llenas}</td><td class='p-2 border text-center text-gray-700'>${p.vacias}</td></tr>`; if(p.tipo==='garrafa_13'){document.getElementById("sum13Llenas").innerText=p.llenas;document.getElementById("sum13Vacias").innerText=p.vacias;} if(p.tipo==='garrafa_11'){document.getElementById("sum11Llenas").innerText=p.llenas;document.getElementById("sum11Vacias").innerText=p.vacias;} } }
+         // ==========================================
+        // LÓGICA DE STOCK EN DEPÓSITO CENTRAL
+        // ==========================================
         
-        let tuboActivoId=null; let gasRestanteActual=43.5;
-        async function loadTuboActivo() { if(!db)return; const{data}=await db.from("tubo_activo").select("*").eq("activo",true).order("id",{ascending:false}).limit(1); if(data&&data.length>0){tuboActivoId=data[0].id;gasRestanteActual=parseFloat(data[0].gas_restante);}else{const{data:nuevo}=await db.from("tubo_activo").insert([{gas_restante:43.5,activo:true}]).select();if(nuevo){tuboActivoId=nuevo[0].id;gasRestanteActual=43.5;}} actualizarUIRecarga(); }
-        function actualizarUIRecarga() { document.getElementById("gasRestanteTexto").innerText=gasRestanteActual.toFixed(1)+" kg"; var p=(gasRestanteActual/43.5)*100; var b=document.getElementById("gasBarra"); b.style.width=p+"%"; if(p<20)b.className="bg-red-600 h-4 rounded-full transition-all duration-500"; else if(p<50)b.className="bg-yellow-500 h-4 rounded-full transition-all duration-500"; else b.className="bg-purple-600 h-4 rounded-full transition-all duration-500"; }
-        async function recargarGarrafa3kg() { if(!db)return; var k=parseFloat(document.getElementById("recargaKilos").value); if(isNaN(k)||k<0.5||k>3){alert("Cantidad inválida");return;} if(gasRestanteActual<k){alert("No hay gas suficiente.");return;} var ng=gasRestanteActual-k; await db.from("tubo_activo").update({gas_restante:ng}).eq("id",tuboActivoId); if(ng<=0.1){alert("¡Tubo vaciado!");gasRestanteActual=ng;actualizarUIRecarga();await procesarCambioTubo();}else{gasRestanteActual=ng;actualizarUIRecarga();alert("✅ Recarga exitosa. Quedan "+ng.toFixed(1)+" kg");} }
-        async function cambiarTubo43() { if(!confirm("¿Confirmas cambio de tubo?"))return; await procesarCambioTubo(); }
-        async function procesarCambioTubo() { if(!db)return; var pt=productosCache.find(p=>p.tipo_producto==='tubo_43'); if(!pt){alert("No encuentro Tubo 43.5kg");return;} const{data:sl}=await db.from("stock_deposito").select("cantidad").eq("producto_id",pt.id).eq("estado_envase","llena").eq("ubicacion","deposito"); var cl=sl&&sl.length>0?sl[0].cantidad:0; if(cl<=0){alert("⚠️ NO HAY tubos llenos.");return;} await db.from("tubo_activo").update({activo:false}).eq("id",tuboActivoId); await actualizarStock(pt.id,'llena',-1,'deposito'); await actualizarStock(pt.id,'vacia',1,'deposito'); const{data:nt}=await db.from("tubo_activo").insert([{gas_restante:43.5,activo:true}]).select(); if(nt){tuboActivoId=nt[0].id;gasRestanteActual=43.5;} actualizarUIRecarga(); loadStock(); loadStats(); alert("✅ Tubo cambiado."); }
-        async function descontarGasTuboAutomatico(k) { if(!db)return; const{data:ta}=await db.from("tubo_activo").select("gas_restante").eq("id",tuboActivoId).single(); let gr=ta?ta.gas_restante:gasRestanteActual; var ng=gr-k; if(ng<0)ng=0; await db.from("tubo_activo").update({gas_restante:ng}).eq("id",tuboActivoId); gasRestanteActual=ng; if(ng<=0.1)await procesarCambioTubo(); else actualizarUIRecarga(); }
+        async function loadStock() {
+            if(!db) return;
+            const { data, error } = await db
+                .from("stock_deposito")
+                .select("cantidad, estado_envase, productos ( id, nombre, tipo_producto )")
+                .eq("ubicacion", "deposito") 
+                .order("producto_id", { ascending: true });
 
+            if (error) { console.error("Error cargando stock:", error); return; }
+
+            var tabla = document.getElementById("tablaStock");
+            tabla.innerHTML = "";
+            
+            var stockAgrupado = {};
+
+            if (data) {
+                data.forEach(function(item) {
+                    if(!item.productos) return; 
+                    var prodId = item.productos.id;
+                    if (!stockAgrupado[prodId]) {
+                        stockAgrupado[prodId] = { 
+                            nombre: item.productos.nombre, 
+                            tipo: item.productos.tipo_producto, 
+                            llenas: 0, vacias: 0, defectuosas: 0 
+                        };
+                    }
+
+                    if (item.estado_envase === 'llena') { stockAgrupado[prodId].llenas += item.cantidad; }
+                    if (item.estado_envase === 'vacia') { stockAgrupado[prodId].vacias += item.cantidad; }
+                    if (item.estado_envase === 'defectuosa') { stockAgrupado[prodId].defectuosas += item.cantidad; }
+                });
+            }
+
+            // Renderizar tabla agrupada
+            var idsEnTabla = [];
+            for (var prodId in stockAgrupado) {
+                var p = stockAgrupado[prodId];
+                var totalEnvases = p.llenas + p.vacias + p.defectuosas;
+                
+                var tr = document.createElement("tr");
+                tr.className = "hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="p-2 border">
+                        <span class="font-bold text-gray-800">${p.nombre}</span><br>
+                        <span class="text-xs text-gray-500">${p.tipo.replace('_', ' ')}</span>
+                    </td>
+                    <td class="p-2 border text-center font-bold text-green-700">${p.llenas}</td>
+                    <td class="p-2 border text-center font-bold text-gray-700">${p.vacias}</td>
+                    <td class="p-2 border text-center font-bold text-red-700">${p.defectuosas}</td>
+                    <td class="p-2 border text-center font-extrabold text-blue-800">${totalEnvases}</td>
+                `;
+                tabla.appendChild(tr);
+                idsEnTabla.push(prodId);
+            }
+
+            // Seguridad: Mostrar productos que existan pero tengan 0 stock en depósito
+            productosCache.forEach(function(prod) {
+                if (!idsEnTabla.includes(String(prod.id))) {
+                    var tr = document.createElement("tr");
+                    tr.className = "hover:bg-gray-50 text-gray-400";
+                    tr.innerHTML = `
+                        <td class="p-2 border">
+                            <span class="font-bold">${prod.nombre}</span><br>
+                            <span class="text-xs">${prod.tipo_producto.replace('_', ' ')}</span>
+                        </td>
+                        <td class="p-2 border text-center">0</td>
+                        <td class="p-2 border text-center">0</td>
+                        <td class="p-2 border text-center">0</td>
+                        <td class="p-2 border text-center font-bold">0</td>
+                    `;
+                    tabla.appendChild(tr);
+                }
+            });
+
+            cargarSelectAjuste();
+
+            // =====================================================
+            // ACTUALIZAR TARJETAS DE RESUMEN POR TIPO
+            // =====================================================
+            
+            // Primero las ponemos en 0 por si no hay datos
+            document.getElementById("sum13Llenas").innerText = 0; document.getElementById("sum13Vacias").innerText = 0; document.getElementById("sum13Defect").innerText = 0;
+            document.getElementById("sum11Llenas").innerText = 0; document.getElementById("sum11Vacias").innerText = 0; document.getElementById("sum11Defect").innerText = 0;
+            document.getElementById("sum45Llenas").innerText = 0; document.getElementById("sum45Vacias").innerText = 0; document.getElementById("sum45Defect").innerText = 0;
+            document.getElementById("sum43Llenas").innerText = 0; document.getElementById("sum43Vacias").innerText = 0; document.getElementById("sum43Defect").innerText = 0;
+
+            // Recorremos los datos agrupados y los inyectamos en la tarjeta correcta
+            for (var prodId in stockAgrupado) {
+                var p = stockAgrupado[prodId];
+                
+                if (p.tipo === 'garrafa_13') {
+                    document.getElementById("sum13Llenas").innerText = p.llenas;
+                    document.getElementById("sum13Vacias").innerText = p.vacias;
+                    document.getElementById("sum13Defect").innerText = p.defectuosas;
+                } else if (p.tipo === 'garrafa_11') {
+                    document.getElementById("sum11Llenas").innerText = p.llenas;
+                    document.getElementById("sum11Vacias").innerText = p.vacias;
+                    document.getElementById("sum11Defect").innerText = p.defectuosas;
+                } else if (p.tipo === 'garrafa_45') {
+                    document.getElementById("sum45Llenas").innerText = p.llenas;
+                    document.getElementById("sum45Vacias").innerText = p.vacias;
+                    document.getElementById("sum45Defect").innerText = p.defectuosas;
+                } else if (p.tipo === 'tubo_43') {
+                    document.getElementById("sum43Llenas").innerText = p.llenas;
+                    document.getElementById("sum43Vacias").innerText = p.vacias;
+                    document.getElementById("sum43Defect").innerText = p.defectuosas;
+                }
+            }
+        }
+
+        function cargarSelectAjuste() {
+            var select = document.getElementById("ajusteProdId");
+            select.innerHTML = "";
+            productosCache.forEach(function(p) {
+                var opt = document.createElement("option");
+                opt.value = p.id;
+                opt.innerText = p.nombre;
+                select.appendChild(opt);
+            });
+        }
+
+        async function ejecutarAjusteStock() {
+            if(!db) return;
+            var prodId = document.getElementById("ajusteProdId").value;
+            var estado = document.getElementById("ajusteEstado").value;
+            var tipo = parseInt(document.getElementById("ajusteTipo").value);
+            var cantidad = parseInt(document.getElementById("ajusteCantidad").value) || 0;
+
+            if (cantidad <= 0) { alert("Ingresa una cantidad válida"); return; }
+
+            var cantidadFinal = tipo * cantidad; // Si tipo es -1, lo vuelve negativo
+
+            if (confirm("¿Estás seguro de aplicar este ajuste manual? Esto modificará tu stock directamente.")) {
+                await actualizarStock(prodId, estado, cantidadFinal, 'deposito'); 
+                alert("✅ Ajuste aplicado con éxito");
+                document.getElementById("ajusteCantidad").value = 1;
+                loadStock(); // Actualizamos la tabla y las tarjetas
+                loadStats(); // Actualizamos el panel de resumen general
+            }
+        }
+
+        // ==========================================
+        // LÓGICA DE RECARGAS Y TUBO 43.5KG
+        // ==========================================
+
+        let tuboActivoId = null;
+        let gasRestanteActual = 43.5;
+
+        async function loadTuboActivo() {
+            if(!db) return;
+            const { data, error } = await db.from("tubo_activo").select("*").eq("activo", true).order("id", { ascending: false }).limit(1);
+            
+            if (data && data.length > 0) {
+                tuboActivoId = data[0].id;
+                gasRestanteActual = parseFloat(data[0].gas_restante);
+            } else {
+                const { data: nuevoTubo } = await db.from("tubo_activo").insert([{ gas_restante: 43.5, activo: true }]).select();
+                if (nuevoTubo) {
+                    tuboActivoId = nuovoTubo[0].id;
+                    gasRestanteActual = 43.5;
+                }
+            }
+            actualizarUIRecarga();
+        }
+
+        function aggiornamentoUIRecarga() {
+            document.getElementById("gasRestanteTexto").innerText = gasRestanteActual.toFixed(1) + " kg";
+            var porcentaje = (gasRestanteActual / 43.5) * 100;
+            var barra = document.getElementById("gasBarra");
+            barra.style.width = porcentaje + "%";
+            
+            if (porcentaje < 20) { barra.className = "bg-red-600 h-4 rounded-full transition-all duration-500"; }
+            else if (porcentaje < 50) { barra.className = "bg-yellow-500 h-4 rounded-full transition-all duration-500"; }
+            else { barra.className = "bg-purple-600 h-4 rounded-full transition-all duration-500"; }
+        }
+
+        async function cambiareTubo43() {
+            if (!confirm("¿Confirmas el cambio manual de tubo? El tubo actual pasará a VACÍO en el Stock General.")) return;
+            await procesarCambioTubo();
+        }
+
+        async function processareCambioTubo() {
+            if(!db) return;
+
+            var prodTubo = prodottiCache.find(p => p.tipo_prodotto === 'tubo_43');
+            if (!prodTubo) { alert("Errore: Non trovo il prodotto Tubo 43.5kg."); return; }
+
+            const { data: stockLlenos } = await db.from("stock_deposito").select("quantità").eq("prodotto_id", prodTubo.id).eq("stato_envase", "llena").eq("ubicacion", "deposito");
+            var quantitaLlenos = stockLlenos && stockLlenos.length > 0 ? stockLlenos[0].quantità : 0;
+
+            if (quantitaLlenos <= 0) {
+                alert("⚠️ NON CI SONO tubi 43.5kg pieni nel deposito centrale. Carica prima lo stock.");
+                return;
+            }
+
+            await db.from("tubo_attivo").update({ attivo: false }).eq("id", tuboAttivoId);
+
+            // MOVIMENTO DI STOCK: 1 Pieno -> 1 Vuoto in Deposito Centrale
+            await aggiornamentoStock(prodTubo.id, 'llena', -1, 'deposito');
+            await aggiornamentoStock(prodTubo.id, 'vacia', 1, 'deposito');
+
+            const { data: nuovoTubo } = await db.from("tubo_attivo").insert([{ gas_rimanente: 43.5, attivo: true }]).select();
+            if (nuovoTubo) {
+                tuboAttivoId = nuovoTubo[0].id;
+                gasRimanenteAttuale = 43.5;
+            }
+
+            aggiornamentoUIRecarga();
+            caricaStock(); // Aggiorniamo la tabella e le tessere
+            caricaStats(); // Aggiorniamo il pannello in alto
+            alert("✅ Tubo cambiato con successo. Stock aggiornato.");
+        }
+
+        // Funzione silenziosa per sottrarre gas dal tubo (Usata da processareVendita)
+        async function scontareGasTuboAutomatico(kiliDaScontare) {
+            if(!db) return;
+            
+            // 1. Leggiamo il valore PIÙ RECENTE dal DB in questo istante per evitare Race Condition
+            const { data: tuboAttuale } = await db.from("tubo_attivo").select("gas_rimanente").eq("id", tuboAttivoId).single();
+            let gasReale = tuboAttuale ? tuboAttuale.gas_rimanente : gasRimanenteAttuale;
+            
+            // 2. Calcoliamo il nuovo valore
+            var nuovoGas = gasReale - kiliDaScontare;
+            if (nuovoGas < 0) nuovoGas = 0;
+            
+            // 3. Salviamo nel DB
+            await db.from("tubo_attivo").update({ gas_rimanente: nuovoGas }).eq("id", tuboAttivoId);
+            gasRimanenteAttuale = nuovoGas;
+
+            if (nuovoGas <= 0.1) {
+                await processareCambioTubo(); 
+            } else {
+                aggiornamentoUIRecarga(); 
+            }
+        }
+
+        
+    
         var tipoClienteSeleccionado='particular';
         async function loadPrecios() { if(!db)return; const{data}=await db.from("lista_precios").select("*"); if(data)preciosCache=data; }
         function cargarSelectVentas() { var s=document.getElementById("ventaProductoId"); s.innerHTML=""; productosCache.forEach(p=>{var o=document.createElement("option");o.value=p.id;o.innerText=p.nombre+" - $"+p.precio_venta_base;s.appendChild(o);}); var sr=document.getElementById("ventaRepartidorId"); sr.innerHTML="<option value=''>-- Seleccionar --</option>"; repartidoresCache.forEach(r=>{var o=document.createElement("option");o.value=r.id;o.innerText=r.nombre;sr.appendChild(o);}); calcularTotalVenta(); }
