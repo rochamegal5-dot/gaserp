@@ -259,21 +259,18 @@
         </table>
     </div>
 </div>
-            <div class="bg-white p-4 rounded-lg shadow-sm">
-    <h3 class="font-bold text-gray-700 mb-2">🚚 Vehículo Activo</h3>
+          <div class="bg-white p-4 rounded-lg shadow-sm">
+    <h3 class="font-bold text-gray-700 mb-2">🚚 Vehículo</h3>
     <select id="selRepartidor" class="w-full border rounded p-2 text-sm mb-2" disabled>
         <option value="">-- Cargando... --</option>
     </select>
     <div class="flex gap-2">
-        <button id="btnConfirmarRep" onclick="confirmarRepartidorGPS()" class="flex-1 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 font-bold text-sm cursor-pointer hidden">✅ Confirmar</button>
-        <button id="btnModificarRep" onclick="modificarRepartidorGPS()" class="flex-1 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600 font-bold text-sm cursor-pointer">✏️ Cambiar</button>
+        <button id="btnConfirmarRep" onclick="confirmarRepartidorGPS()" class="flex-1 bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 font-bold text-xs cursor-pointer hidden">✅ Confirmar</button>
+        <button id="btnModificarRep" onclick="modificarRepartidorGPS()" class="flex-1 bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 font-bold text-xs cursor-pointer">✏️ Cambiar</button>
     </div>
-    <!-- Muestra el nombre del repartidor fijo en grande -->
-    <div id="nombreRepActivo" class="hidden mt-3 bg-green-100 border border-green-400 text-green-800 p-3 rounded-lg text-center">
-        <p class="text-xs font-bold uppercase">En seguimiento:</p>
-        <p id="txtNombreRepActivo" class="text-xl font-black">-</p>
-    </div>
+    <p id="txtNombreRepActivo" class="hidden mt-2 text-center text-green-700 font-extrabold text-sm">🟢 En seguimiento: -</p>
 </div>
+            
 
     <!-- TAB EN VIVO -->
     <div id="gpsVivo">
@@ -1370,47 +1367,37 @@ async function cargarRepartidoresGPS() {
 function confirmarRepartidorGPS() {
     var sel = document.getElementById("selRepartidor");
     var selectedId = sel.value;
+    if (!selectedId) { alert("Seleccioná un repartidor primero."); return; }
     
-    if (!selectedId) {
-        alert("Por favor, seleccioná un repartidor de la lista primero.");
-        return;
-    }
-
-    // Guardar en memoria persistente del navegador
     localStorage.setItem('gps_repartidor_id', selectedId);
     currentRepartidorId = selectedId;
-
-    // Actualizar la interfaz (Bloquear select, ocultar botón confirmar, mostrar nombre)
+    
     sel.disabled = true;
     document.getElementById("btnConfirmarRep").classList.add("hidden");
     document.getElementById("btnModificarRep").classList.remove("hidden");
-    document.getElementById("nombreRepActivo").classList.remove("hidden");
     
     var nombreSeleccionado = sel.options[sel.selectedIndex].text;
-    document.getElementById("txtNombreRepActivo").innerText = nombreSeleccionado;
-    localStorage.setItem('gps_repartidor_nombre', nombreSeleccionado);
+    var txtActivo = document.getElementById("txtNombreRepActivo");
+    txtActivo.innerText = "🟢 En seguimiento: " + nombreSeleccionado;
+    txtActivo.classList.remove("hidden");
 
-    // Si ya tenemos su posición en el mapa, centramos ahí
-    if (vehiculosEnVivo[currentRepartidorId]) {
-        var latlng = vehiculosEnVivo[currentRepartidorId].getLatLng();
-        if(gpsMap) gpsMap.setView(latlng, 16);
+    if (vehiculosEnVivo[currentRepartidorId] && gpsMap) {
+        gpsMap.setView(vehiculosEnVivo[currentRepartidorId].getLatLng(), 16);
     }
 }
 
 function modificarRepartidorGPS() {
-    var sel = document.getElementById("selRepartidor");
-    
-    // Limpiar la selección persistente
     localStorage.removeItem('gps_repartidor_id');
-    localStorage.removeItem('gps_repartidor_nombre');
     currentRepartidorId = null;
-
-    // Actualizar la interfaz (Desbloquear select, mostrar botón confirmar, ocultar nombre)
+    
+    var sel = document.getElementById("selRepartidor");
     sel.disabled = false;
     document.getElementById("btnConfirmarRep").classList.remove("hidden");
     document.getElementById("btnModificarRep").classList.add("hidden");
-    document.getElementById("nombreRepActivo").classList.add("hidden");
+    document.getElementById("txtNombreRepActivo").classList.add("hidden");
 }
+
+   
         
 function initGPSMap() {
     gpsMap = L.map('gpsMap').setView([-34.4833, -54.3333], 14);
