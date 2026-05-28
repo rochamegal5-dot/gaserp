@@ -374,247 +374,278 @@
         async function guardarRemito() { if(!db)return; var pid=document.getElementById("remProvId").value; var nro=document.getElementById("remNumero").value; if(!pid||!nro){alert("Completa datos");return;} var cab={proveedor_id:pid,nro_remito:nro,total:0,estado_pago:'pendiente'}; var rc=await db.from("remitos_proveedor").insert([cab]).select(); if(rc.error){alert(rc.error.message);return;} var rid=rc.data[0].id; for(var i=1;i<=2;i++){var pr=document.getElementById("remProdId"+i).value; var ll=parseInt(document.getElementById("remLlenas"+i).value)||0; var va=parseInt(document.getElementById("remVacias"+i).value)||0; if(ll>0){await actualizarStock(pr,'llena',ll,'deposito');} if(va>0){await actualizarStock(pr,'vacia',-va,'deposito');} document.getElementById("remLlenas"+i).value=0; document.getElementById("remVacias"+i).value=0;} document.getElementById("remNumero").value=""; alert("✅ Remito procesado!"); loadStats(); }
         async function eliminarProveedor(id) { if(!db)return; if(confirm("¿Eliminar?")){await db.from("proveedores").delete().eq("id",id); loadProveedores();} }
 
-         // ==========================================
-        // LÓGICA DE STOCK EN DEPÓSITO CENTRAL
         // ==========================================
-        
-        async function loadStock() {
-            if(!db) return;
-            const { data, error } = await db
-                .from("stock_deposito")
-                .select("cantidad, estado_envase, productos ( id, nombre, tipo_producto )")
-                .eq("ubicacion", "deposito") 
-                .order("producto_id", { ascending: true });
+// LÓGICA DE STOCK EN DEPÓSITO CENTRAL
+// ==========================================
 
-            if (error) { console.error("Error cargando stock:", error); return; }
+async function loadStock() {
+    if (!db) return;
+    const { data, error } = await db
+        .from("stock_deposito")
+        .select("cantidad, estado_envase, productos ( id, nombre, tipo_producto )")
+        .eq("ubicacion", "deposito")
+        .order("producto_id", { ascending: true });
 
-            var tabla = document.getElementById("tablaStock");
-            tabla.innerHTML = "";
-            
-            var stockAgrupado = {};
+    if (error) { console.error("Error cargando stock:", error); return; }
 
-            if (data) {
-                data.forEach(function(item) {
-                    if(!item.productos) return; 
-                    var prodId = item.productos.id;
-                    if (!stockAgrupado[prodId]) {
-                        stockAgrupado[prodId] = { 
-                            nombre: item.productos.nombre, 
-                            tipo: item.productos.tipo_producto, 
-                            llenas: 0, vacias: 0, defectuosas: 0 
-                        };
-                    }
+    var tabla = document.getElementById("tablaStock");
+    tabla.innerHTML = "";
 
-                    if (item.estado_envase === 'llena') { stockAgrupado[prodId].llenas += item.cantidad; }
-                    if (item.estado_envase === 'vacia') { stockAgrupado[prodId].vacias += item.cantidad; }
-                    if (item.estado_envase === 'defectuosa') { stockAgrupado[prodId].defectuosas += item.cantidad; }
-                });
+    var stockAgrupado = {};
+
+    if (data) {
+        data.forEach(function (item) {
+            if (!item.productos) return;
+            var prodId = item.productos.id;
+            if (!stockAgrupado[prodId]) {
+                stockAgrupado[prodId] = {
+                    nombre: item.productos.nombre,
+                    tipo: item.productos.tipo_producto,
+                    llenas: 0, vacias: 0, defectuosas: 0
+                };
             }
 
-            // Renderizar tabla agrupada
-            var idsEnTabla = [];
-            for (var prodId in stockAgrupado) {
-                var p = stockAgrupado[prodId];
-                var totalEnvases = p.llenas + p.vacias + p.defectuosas;
-                
-                var tr = document.createElement("tr");
-                tr.className = "hover:bg-gray-50";
-                tr.innerHTML = `
-                    <td class="p-2 border">
-                        <span class="font-bold text-gray-800">${p.nombre}</span><br>
-                        <span class="text-xs text-gray-500">${p.tipo.replace('_', ' ')}</span>
-                    </td>
-                    <td class="p-2 border text-center font-bold text-green-700">${p.llenas}</td>
-                    <td class="p-2 border text-center font-bold text-gray-700">${p.vacias}</td>
-                    <td class="p-2 border text-center font-bold text-red-700">${p.defectuosas}</td>
-                    <td class="p-2 border text-center font-extrabold text-blue-800">${totalEnvases}</td>
-                `;
-                tabla.appendChild(tr);
-                idsEnTabla.push(prodId);
-            }
+            if (item.estado_envase === 'llena')       { stockAgrupado[prodId].llenas += item.cantidad; }
+            if (item.estado_envase === 'vacia')       { stockAgrupado[prodId].vacias += item.cantidad; }
+            if (item.estado_envase === 'defectuosa')  { stockAgrupado[prodId].defectuosas += item.cantidad; }
+        });
+    }
 
-            // Seguridad: Mostrar productos que existan pero tengan 0 stock en depósito
-            productosCache.forEach(function(prod) {
-                if (!idsEnTabla.includes(String(prod.id))) {
-                    var tr = document.createElement("tr");
-                    tr.className = "hover:bg-gray-50 text-gray-400";
-                    tr.innerHTML = `
-                        <td class="p-2 border">
-                            <span class="font-bold">${prod.nombre}</span><br>
-                            <span class="text-xs">${prod.tipo_producto.replace('_', ' ')}</span>
-                        </td>
-                        <td class="p-2 border text-center">0</td>
-                        <td class="p-2 border text-center">0</td>
-                        <td class="p-2 border text-center">0</td>
-                        <td class="p-2 border text-center font-bold">0</td>
-                    `;
-                    tabla.appendChild(tr);
-                }
-            });
+    // Renderizar tabla agrupada
+    var idsEnTabla = [];
+    for (var prodId in stockAgrupado) {
+        var p = stockAgrupado[prodId];
+        var totalEnvases = p.llenas + p.vacias + p.defectuosas;
 
-            cargarSelectAjuste();
+        var tr = document.createElement("tr");
+        tr.className = "hover:bg-gray-50";
+        tr.innerHTML = `
+            <td class="p-2 border">
+                <span class="font-bold text-gray-800">${p.nombre}</span><br>
+                <span class="text-xs text-gray-500">${p.tipo.replace('_', ' ')}</span>
+            </td>
+            <td class="p-2 border text-center font-bold text-green-700">${p.llenas}</td>
+            <td class="p-2 border text-center font-bold text-gray-700">${p.vacias}</td>
+            <td class="p-2 border text-center font-bold text-red-700">${p.defectuosas}</td>
+            <td class="p-2 border text-center font-extrabold text-blue-800">${totalEnvases}</td>
+        `;
+        tabla.appendChild(tr);
+        idsEnTabla.push(prodId);
+    }
 
-            // =====================================================
-            // ACTUALIZAR TARJETAS DE RESUMEN POR TIPO
-            // =====================================================
-            
-            // Primero las ponemos en 0 por si no hay datos
-            document.getElementById("sum13Llenas").innerText = 0; document.getElementById("sum13Vacias").innerText = 0; document.getElementById("sum13Defect").innerText = 0;
-            document.getElementById("sum11Llenas").innerText = 0; document.getElementById("sum11Vacias").innerText = 0; document.getElementById("sum11Defect").innerText = 0;
-            document.getElementById("sum45Llenas").innerText = 0; document.getElementById("sum45Vacias").innerText = 0; document.getElementById("sum45Defect").innerText = 0;
-            document.getElementById("sum43Llenas").innerText = 0; document.getElementById("sum43Vacias").innerText = 0; document.getElementById("sum43Defect").innerText = 0;
-
-            // Recorremos los datos agrupados y los inyectamos en la tarjeta correcta
-            for (var prodId in stockAgrupado) {
-                var p = stockAgrupado[prodId];
-                
-                if (p.tipo === 'garrafa_13') {
-                    document.getElementById("sum13Llenas").innerText = p.llenas;
-                    document.getElementById("sum13Vacias").innerText = p.vacias;
-                    document.getElementById("sum13Defect").innerText = p.defectuosas;
-                } else if (p.tipo === 'garrafa_11') {
-                    document.getElementById("sum11Llenas").innerText = p.llenas;
-                    document.getElementById("sum11Vacias").innerText = p.vacias;
-                    document.getElementById("sum11Defect").innerText = p.defectuosas;
-                } else if (p.tipo === 'garrafa_45') {
-                    document.getElementById("sum45Llenas").innerText = p.llenas;
-                    document.getElementById("sum45Vacias").innerText = p.vacias;
-                    document.getElementById("sum45Defect").innerText = p.defectuosas;
-                } else if (p.tipo === 'tubo_43') {
-                    document.getElementById("sum43Llenas").innerText = p.llenas;
-                    document.getElementById("sum43Vacias").innerText = p.vacias;
-                    document.getElementById("sum43Defect").innerText = p.defectuosas;
-                }
-            }
+    // Mostrar productos con 0 stock
+    productosCache.forEach(function (prod) {
+        if (!idsEnTabla.includes(String(prod.id))) {
+            var tr = document.createElement("tr");
+            tr.className = "hover:bg-gray-50 text-gray-400";
+            tr.innerHTML = `
+                <td class="p-2 border">
+                    <span class="font-bold">${prod.nombre}</span><br>
+                    <span class="text-xs">${prod.tipo_producto.replace('_', ' ')}</span>
+                </td>
+                <td class="p-2 border text-center">0</td>
+                <td class="p-2 border text-center">0</td>
+                <td class="p-2 border text-center">0</td>
+                <td class="p-2 border text-center font-bold">0</td>
+            `;
+            tabla.appendChild(tr);
         }
+    });
 
-        function cargarSelectAjuste() {
-            var select = document.getElementById("ajusteProdId");
-            select.innerHTML = "";
-            productosCache.forEach(function(p) {
-                var opt = document.createElement("option");
-                opt.value = p.id;
-                opt.innerText = p.nombre;
-                select.appendChild(opt);
-            });
+    cargarSelectAjuste();
+
+    // Actualizar tarjetas de resumen por tipo
+    document.getElementById("sum13Llenas").innerText = 0;
+    document.getElementById("sum13Vacias").innerText = 0;
+    document.getElementById("sum13Defect").innerText = 0;
+    document.getElementById("sum11Llenas").innerText = 0;
+    document.getElementById("sum11Vacias").innerText = 0;
+    document.getElementById("sum11Defect").innerText = 0;
+    document.getElementById("sum45Llenas").innerText = 0;
+    document.getElementById("sum45Vacias").innerText = 0;
+    document.getElementById("sum45Defect").innerText = 0;
+    document.getElementById("sum43Llenas").innerText = 0;
+    document.getElementById("sum43Vacias").innerText = 0;
+    document.getElementById("sum43Defect").innerText = 0;
+
+    for (var prodId in stockAgrupado) {
+        var p = stockAgrupado[prodId];
+
+        if (p.tipo === 'garrafa_13') {
+            document.getElementById("sum13Llenas").innerText = p.llenas;
+            document.getElementById("sum13Vacias").innerText = p.vacias;
+            document.getElementById("sum13Defect").innerText = p.defectuosas;
+        } else if (p.tipo === 'garrafa_11') {
+            document.getElementById("sum11Llenas").innerText = p.llenas;
+            document.getElementById("sum11Vacias").innerText = p.vacias;
+            document.getElementById("sum11Defect").innerText = p.defectuosas;
+        } else if (p.tipo === 'garrafa_45') {
+            document.getElementById("sum45Llenas").innerText = p.llenas;
+            document.getElementById("sum45Vacias").innerText = p.vacias;
+            document.getElementById("sum45Defect").innerText = p.defectuosas;
+        } else if (p.tipo === 'tubo_43') {
+            document.getElementById("sum43Llenas").innerText = p.llenas;
+            document.getElementById("sum43Vacias").innerText = p.vacias;
+            document.getElementById("sum43Defect").innerText = p.defectuosas;
         }
+    }
+}
 
-        async function ejecutarAjusteStock() {
-            if(!db) return;
-            var prodId = document.getElementById("ajusteProdId").value;
-            var estado = document.getElementById("ajusteEstado").value;
-            var tipo = parseInt(document.getElementById("ajusteTipo").value);
-            var cantidad = parseInt(document.getElementById("ajusteCantidad").value) || 0;
+function cargarSelectAjuste() {
+    var select = document.getElementById("ajusteProdId");
+    select.innerHTML = "";
+    productosCache.forEach(function (p) {
+        var opt = document.createElement("option");
+        opt.value = p.id;
+        opt.innerText = p.nombre;
+        select.appendChild(opt);
+    });
+}
 
-            if (cantidad <= 0) { alert("Ingresa una cantidad válida"); return; }
+async function ejecutarAjusteStock() {
+    if (!db) return;
+    var prodId = document.getElementById("ajusteProdId").value;
+    var estado = document.getElementById("ajusteEstado").value;
+    var tipo = parseInt(document.getElementById("ajusteTipo").value);
+    var cantidad = parseInt(document.getElementById("ajusteCantidad").value) || 0;
 
-            var cantidadFinal = tipo * cantidad; // Si tipo es -1, lo vuelve negativo
+    if (cantidad <= 0) { alert("Ingresa una cantidad válida"); return; }
 
-            if (confirm("¿Estás seguro de aplicar este ajuste manual? Esto modificará tu stock directamente.")) {
-                await actualizarStock(prodId, estado, cantidadFinal, 'deposito'); 
-                alert("✅ Ajuste aplicado con éxito");
-                document.getElementById("ajusteCantidad").value = 1;
-                loadStock(); // Actualizamos la tabla y las tarjetas
-                loadStats(); // Actualizamos el panel de resumen general
-            }
+    var cantidadFinal = tipo * cantidad;
+
+    if (confirm("¿Estás seguro de aplicar este ajuste manual? Esto modificará tu stock directamente.")) {
+        await actualizarStock(prodId, estado, cantidadFinal, 'deposito');
+        alert("✅ Ajuste aplicado con éxito");
+        document.getElementById("ajusteCantidad").value = 1;
+        loadStock();
+        loadStats();
+    }
+}
+
+// ==========================================
+// LÓGICA DE RECARGAS Y TUBO 43.5KG
+// ==========================================
+
+let tuboActivoId = null;
+let gasRestanteActual = 43.5;
+
+async function loadTuboActivo() {
+    if (!db) return;
+    const { data, error } = await db
+        .from("tubo_activo")
+        .select("*")
+        .eq("activo", true)
+        .order("id", { ascending: false })
+        .limit(1);
+
+    if (data && data.length > 0) {
+        tuboActivoId = data[0].id;
+        gasRestanteActual = parseFloat(data[0].gas_restante);
+    } else {
+        const { data: nuevoTubo } = await db
+            .from("tubo_activo")
+            .insert([{ gas_restante: 43.5, activo: true }])
+            .select();
+        if (nuevoTubo) {
+            tuboActivoId = nuevoTubo[0].id;       // ✅ nombre consistente
+            gasRestanteActual = 43.5;
         }
+    }
+    actualizarUIRecarga();                         // ✅ nombre consistente
+}
 
-        // ==========================================
-        // LÓGICA DE RECARGAS Y TUBO 43.5KG
-        // ==========================================
+function actualizarUIRecarga() {                    // ✅ nombre consistente
+    document.getElementById("gasRestanteTexto").innerText = gasRestanteActual.toFixed(1) + " kg";
+    var porcentaje = (gasRestanteActual / 43.5) * 100;
+    var barra = document.getElementById("gasBarra");
+    barra.style.width = porcentaje + "%";
 
-        let tuboActivoId = null;
-        let gasRestanteActual = 43.5;
+    if (porcentaje < 20) {
+        barra.className = "bg-red-600 h-4 rounded-full transition-all duration-500";
+    } else if (porcentaje < 50) {
+        barra.className = "bg-yellow-500 h-4 rounded-full transition-all duration-500";
+    } else {
+        barra.className = "bg-purple-600 h-4 rounded-full transition-all duration-500";
+    }
+}
 
-        async function loadTuboActivo() {
-            if(!db) return;
-            const { data, error } = await db.from("tubo_activo").select("*").eq("activo", true).order("id", { ascending: false }).limit(1);
-            
-            if (data && data.length > 0) {
-                tuboActivoId = data[0].id;
-                gasRestanteActual = parseFloat(data[0].gas_restante);
-            } else {
-                const { data: nuevoTubo } = await db.from("tubo_activo").insert([{ gas_restante: 43.5, activo: true }]).select();
-                if (nuevoTubo) {
-                    tuboActivoId = nuovoTubo[0].id;
-                    gasRestanteActual = 43.5;
-                }
-            }
-            actualizarUIRecarga();
-        }
+async function cambiarTubo43() {                    // ✅ nombre consistente
+    if (!confirm("¿Confirmas el cambio manual de tubo? El tubo actual pasará a VACÍO en el Stock General.")) return;
+    await procesarCambioTubo();
+}
 
-        function aggiornamentoUIRecarga() {
-            document.getElementById("gasRestanteTexto").innerText = gasRestanteActual.toFixed(1) + " kg";
-            var porcentaje = (gasRestanteActual / 43.5) * 100;
-            var barra = document.getElementById("gasBarra");
-            barra.style.width = porcentaje + "%";
-            
-            if (porcentaje < 20) { barra.className = "bg-red-600 h-4 rounded-full transition-all duration-500"; }
-            else if (porcentaje < 50) { barra.className = "bg-yellow-500 h-4 rounded-full transition-all duration-500"; }
-            else { barra.className = "bg-purple-600 h-4 rounded-full transition-all duration-500"; }
-        }
+async function procesarCambioTubo() {               // ✅ nombre consistente
+    if (!db) return;
 
-        async function cambiareTubo43() {
-            if (!confirm("¿Confirmas el cambio manual de tubo? El tubo actual pasará a VACÍO en el Stock General.")) return;
-            await procesarCambioTubo();
-        }
+    var prodTubo = productosCache.find(p => p.tipo_producto === 'tubo_43');  // ✅ español
+    if (!prodTubo) { alert("Error: No encuentro el producto Tubo 43.5kg."); return; }
 
-        async function processareCambioTubo() {
-            if(!db) return;
+    const { data: stockLlenos } = await db
+        .from("stock_deposito")
+        .select("cantidad")                        // ✅ columna correcta
+        .eq("producto_id", prodTubo.id)            // ✅ columna correcta
+        .eq("estado_envase", "llena")              // ✅ columna correcta
+        .eq("ubicacion", "deposito");
 
-            var prodTubo = prodottiCache.find(p => p.tipo_prodotto === 'tubo_43');
-            if (!prodTubo) { alert("Errore: Non trovo il prodotto Tubo 43.5kg."); return; }
+    var cantidadLlenos = stockLlenos && stockLlenos.length > 0 ? stockLlenos[0].cantidad : 0;  // ✅
 
-            const { data: stockLlenos } = await db.from("stock_deposito").select("quantità").eq("prodotto_id", prodTubo.id).eq("stato_envase", "llena").eq("ubicacion", "deposito");
-            var quantitaLlenos = stockLlenos && stockLlenos.length > 0 ? stockLlenos[0].quantità : 0;
+    if (cantidadLlenos <= 0) {
+        alert("⚠️ No hay tubos 43.5kg llenos en el depósito central. Carga el stock primero.");
+        return;
+    }
 
-            if (quantitaLlenos <= 0) {
-                alert("⚠️ NON CI SONO tubi 43.5kg pieni nel deposito centrale. Carica prima lo stock.");
-                return;
-            }
+    // Desactivar tubo actual
+    await db.from("tubo_activo").update({ activo: false }).eq("id", tuboActivoId);  // ✅
 
-            await db.from("tubo_attivo").update({ attivo: false }).eq("id", tuboAttivoId);
+    // Movimiento de stock: 1 lleno → 1 vacío
+    await actualizarStock(prodTubo.id, 'llena', -1, 'deposito');   // ✅
+    await actualizarStock(prodTubo.id, 'vacia', 1, 'deposito');    // ✅
 
-            // MOVIMENTO DI STOCK: 1 Pieno -> 1 Vuoto in Deposito Centrale
-            await aggiornamentoStock(prodTubo.id, 'llena', -1, 'deposito');
-            await aggiornamentoStock(prodTubo.id, 'vacia', 1, 'deposito');
+    // Crear nuevo tubo activo
+    const { data: nuevoTubo } = await db
+        .from("tubo_activo")
+        .insert([{ gas_restante: 43.5, activo: true }])           // ✅ columnas correctas
+        .select();
 
-            const { data: nuovoTubo } = await db.from("tubo_attivo").insert([{ gas_rimanente: 43.5, attivo: true }]).select();
-            if (nuovoTubo) {
-                tuboAttivoId = nuovoTubo[0].id;
-                gasRimanenteAttuale = 43.5;
-            }
+    if (nuevoTubo) {
+        tuboActivoId = nuevoTubo[0].id;            // ✅ variable consistente
+        gasRestanteActual = 43.5;                   // ✅ variable consistente
+    }
 
-            aggiornamentoUIRecarga();
-            caricaStock(); // Aggiorniamo la tabella e le tessere
-            caricaStats(); // Aggiorniamo il pannello in alto
-            alert("✅ Tubo cambiato con successo. Stock aggiornato.");
-        }
+    actualizarUIRecarga();                          // ✅
+    loadStock();                                    // ✅
+    loadStats();                                    // ✅
+    alert("✅ Tubo cambiado con éxito. Stock actualizado.");
+}
 
-        // Funzione silenziosa per sottrarre gas dal tubo (Usata da processareVendita)
-        async function scontareGasTuboAutomatico(kiliDaScontare) {
-            if(!db) return;
-            
-            // 1. Leggiamo il valore PIÙ RECENTE dal DB in questo istante per evitare Race Condition
-            const { data: tuboAttuale } = await db.from("tubo_attivo").select("gas_rimanente").eq("id", tuboAttivoId).single();
-            let gasReale = tuboAttuale ? tuboAttuale.gas_rimanente : gasRimanenteAttuale;
-            
-            // 2. Calcoliamo il nuovo valore
-            var nuovoGas = gasReale - kiliDaScontare;
-            if (nuovoGas < 0) nuovoGas = 0;
-            
-            // 3. Salviamo nel DB
-            await db.from("tubo_attivo").update({ gas_rimanente: nuovoGas }).eq("id", tuboAttivoId);
-            gasRimanenteAttuale = nuovoGas;
+// Función silenciosa para sotraer gas (usada por procesarVenta)
+async function descontarGasTuboAutomatico(kilosADescontar) {  // ✅ español
+    if (!db) return;
 
-            if (nuovoGas <= 0.1) {
-                await processareCambioTubo(); 
-            } else {
-                aggiornamentoUIRecarga(); 
-            }
-        }
+    // Leer valor más reciente del DB para evitar race condition
+    const { data: tuboActual } = await db
+        .from("tubo_activo")
+        .select("gas_restante")                     // ✅ columna correcta
+        .eq("id", tuboActivoId)                     // ✅ variable consistente
+        .single();
 
-        
+    let gasReal = tuboActual ? tuboActual.gas_restante : gasRestanteActual;  // ✅
+
+    var nuevoGas = gasReal - kilosADescontar;
+    if (nuevoGas < 0) nuevoGas = 0;
+
+    await db.from("tubo_activo").update({ gas_restante: nuevoGas }).eq("id", tuboActivoId);  // ✅
+    gasRestanteActual = nuevoGas;                   // ✅
+
+    if (nuevoGas <= 0.1) {
+        await procesarCambioTubo();                 // ✅
+    } else {
+        actualizarUIRecarga();                      // ✅
+    }
+}
+
+     
+     
     
         var tipoClienteSeleccionado='particular';
         async function loadPrecios() { if(!db)return; const{data}=await db.from("lista_precios").select("*"); if(data)preciosCache=data; }
