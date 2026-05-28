@@ -270,29 +270,30 @@
     </div>
     <p id="txtNombreRepActivo" class="hidden mt-2 text-center text-green-700 font-extrabold text-sm">🟢 En seguimiento: -</p>
 </div>
+
+
+    <!--GPS-->
 <div id="view-gps" class="view-section hidden">
     <h2 class="text-2xl font-semibold text-gray-800 mb-4">📍 Rastreo Vehicular</h2>
     
-    <!-- Pestañas originales -->
     <div class="flex border-b border-gray-200 mb-4">
         <button onclick="mostrarTabGPS('vivo')" id="tabGPSVivo" class="py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600">📍 En Vivo</button>
         <button onclick="mostrarTabGPS('historial')" id="tabGPSHist" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent">📊 Historial del Día</button>
     </div>
 
-    <!-- TAB EN VIVO -->
     <div id="gpsVivo">
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- Mapa Vivo (3 columnas) -->
+            
+            <!-- COLUMNA IZQUIERDA: MAPA (3 columnas) -->
             <div class="lg:col-span-3 bg-white p-2 rounded-lg shadow-sm relative" style="min-height: 550px;">
                 <div id="gpsMap" style="height: 100%; width: 100%; border-radius: 0.5rem; z-index: 1;"></div>
                 
-                <!-- Alerta FLOTANTE (No empuja nada, se superpone al mapa) -->
+                <!-- Alerta y Velocidad FLOTANDO sobre el mapa (No ocupan espacio extra) -->
                 <div id="gpsAlertBox" class="hidden absolute top-4 left-4 z-10 bg-orange-100 border-l-4 border-orange-500 text-orange-800 p-3 rounded shadow-lg" role="alert" style="max-width: 300px;">
                     <p class="font-bold text-base" id="gpsAlertText">🚨 Alerta</p>
                     <p class="text-xs" id="gpsAlertSubtext"></p>
                 </div>
 
-                <!-- Velocidad FLOTANTE -->
                 <div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
                     <div class="bg-white bg-opacity-90 px-4 py-2 rounded-lg shadow-md text-center">
                         <p class="text-xs text-gray-500 font-bold">VELOCIDAD</p>
@@ -302,10 +303,10 @@
                 </div>
             </div>
 
-            <!-- Panel Derecho (1 columna) -->
+            <!-- COLUMNA DERECHA: CONTROLES (1 columna) -->
             <div class="space-y-4">
                 
-                <!-- CUADRO VEHÍCULO -->
+                <!-- SELECCIÓN DE VEHÍCULO (Solo acá) -->
                 <div class="bg-white p-4 rounded-lg shadow-sm">
                     <h3 class="font-bold text-gray-700 mb-2">🚚 Vehículo</h3>
                     <select id="selRepartidor" class="w-full border rounded p-2 text-sm mb-2" disabled>
@@ -318,7 +319,7 @@
                     <p id="txtNombreRepActivo" class="hidden mt-2 text-center text-green-700 font-extrabold text-sm">🟢 En seguimiento: -</p>
                 </div>
 
-                <!-- Agregar Punto -->
+                <!-- AGREGAR PUNTO -->
                 <div class="bg-white p-4 rounded-lg shadow-sm">
                     <h3 class="font-bold text-gray-700 mb-3">📌 Agregar Punto</h3>
                     <div class="space-y-2">
@@ -331,13 +332,13 @@
                     </div>
                 </div>
                 
-                <!-- Puntos Registrados -->
+                <!-- PUNTOS REGISTRADOS -->
                 <div class="bg-white p-4 rounded-lg shadow-sm max-h-40 overflow-y-auto">
                     <h3 class="font-bold text-gray-700 mb-3 text-sm">Puntos Registrados</h3>
                     <div id="listaMarcadores" class="space-y-2 text-xs"></div>
                 </div>
 
-                <!-- Registro en Vivo -->
+                <!-- REGISTRO EN VIVO -->
                 <div class="bg-white p-4 rounded-lg shadow-sm max-h-56 overflow-y-auto">
                     <h3 class="font-bold text-gray-700 mb-3 text-sm">📋 Registro en Vivo</h3>
                     <table class="w-full text-left border-collapse text-xs">
@@ -349,7 +350,7 @@
         </div>
     </div>
 
-    <!-- TAB HISTORIAL -->
+    <!-- HISTORIAL -->
     <div id="gpsHistorial" class="hidden">
         <div class="bg-white p-4 rounded-lg shadow-sm mb-4 flex justify-between items-center no-print">
             <h3 class="font-bold text-gray-700">Recorridos del Día</h3>
@@ -365,8 +366,8 @@
         </div>
     </div>
 </div>
-        
-   
+
+       
           
             <!-- INICIO SECCIÓN FINANZAS COMPLETA -->
 <div id="view-finanzas" class="view-section hidden">
