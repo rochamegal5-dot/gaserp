@@ -2686,7 +2686,7 @@ var marcadoresCache = [];
 var currentAlertId = null; 
 var currentRepartidorId = null;
 var gpsRealtimeChannel = null;
-
+var repartidorColores = ['#2563EB', '#DC2626', '#16A34A', '#D97706', '#7C3AED', '#DB2777', '#0891B2', '#4338CA'];
 // Variables de Seguimiento y Cronómetro
 var seguirVehiculo = true;
 var stopInterval = null;
@@ -2714,19 +2714,29 @@ function mostrarTabGPS(tab) {
 function initGPSMap() {
     gpsMap = L.map('gpsMap').setView([-34.4833, -54.3333], 14);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap contributors © CARTO' }).addTo(gpsMap);
-    rutaPolyline = L.polyline([], {color: 'blue', weight: 4}).addTo(gpsMap);
+    
+    // Ya NO creamos la rutaPolyline aquí porque no queremos el rastro en vivo
+    
     poisLayer = L.layerGroup().addTo(gpsMap);
 
-         function initDashboardMap() {
-            // Solo se crea si el div existe en el HTML y no fue creado ya
-            if(document.getElementById("dashMap") && !dashMap) {
-                dashMap = L.map('dashMap').setView([-34.4833, -54.3333], 13); // Coordenadas de Rocha
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
-                    attribution: '© OpenStreetMap' 
-                }).addTo(dashMap);
-            }
-        }	
+    function initDashboardMap() {
+        if(document.getElementById("dashMap") && !dashMap) {
+            dashMap = L.map('dashMap').setView([-34.4833, -54.3333], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' }).addTo(dashMap);
+        }
+    }	
 
+    gpsMap.on('click', function(e) {
+        document.getElementById("mkLat").value = e.latlng.lat.toFixed(6);
+        document.getElementById("mkLng").value = e.latlng.lng.toFixed(6);
+    });
+
+    cargarRepartidores();
+    loadMarcadores();
+    escucharGPSRealtimeGlobal(); // Escuchamos a TODOS los repartidores
+}
+
+        
     // Evento click en mapa como alternativa a la dirección
     gpsMap.on('click', function(e) {
         document.getElementById("mkLat").value = e.latlng.lat.toFixed(6);
@@ -2736,6 +2746,18 @@ function initGPSMap() {
     cargarRepartidores();
     loadMarcadores();
 }
+
+function escucharGPSRealtimeGlobal() {
+    if(!db) return;
+    if(gpsRealtimeChannel) db.removeChannel(gpsRealtimeChannel);
+    
+    // Escuchamos TODOS los inserts en gps_tracking
+    gpsRealtimeChannel = db.channel('gps-todos')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'gps_tracking' }, payload => {
+        actualizarMarcadorVivo(payload.new);
+    })
+    .subscribe();
+}		
 
 // --- CARGA DE REPARTIDORES DESDE BD ---
 async function cargarRepartidores() {
@@ -2756,42 +2778,32 @@ async function cargarRepartidores() {
 // --- CAMBIO DE REPARTIDOR SELECCIONADO ---
 async function cambiarRepartidor() {
     var newId = document.getElementById("selRepartidor").value;
-    if (newId === currentRepartidorId) return;
-    
     currentRepartidorId = newId;
     
-    // Limpiar mapa
-    if(vehiculoMarker) { gpsMap.removeLayer(vehiculoMarker); vehiculoMarker = null; }
-    rutaPolyline.setLatLngs([]);
     resetStopTimer();
+    document.getElementById("gpsAlertBox").classList.add("hidden");
+    document.getElementById("gpsStopBox").classList.add("hidden");
 
-    // Cambiar canal de Supabase Realtime
-    if(gpsRealtimeChannel) db.removeChannel(gpsRealtimeChannel);
-    
     if(currentRepartidorId) {
-        // Buscar la última ubicación en la tabla correcta (gps_tracking)
-        const { data, error } = await db
-            .from('gps_tracking')
-            .select('*')
-            .eq('repartidor_id', currentRepartidorId) // Cambio de device_id a repartidor_id
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-        if (!error && data && data.length > 0) {
-            moverVehiculo(data[0]);
-            gpsMap.setView([parseFloat(data[0].lat), parseFloat(data[0].lng)], 15);
-        } else {
-            alert("Sin datos de GPS aún. Abre la app en el celular con este repartidor.");
+        // Traer la última ubicación de ESTE repartidor para centrar la cámara
+        const { data } = await db.from('gps_tracking').select('*').eq('repartidor_id', currentRepartidorId).order('created_at', { ascending: false }).limit(1);
+        if (data && data.length > 0) {
+            actualizarMarcadorVivo(data[0]);
         }
-
-        escucharGPSRealtime(currentRepartidorId);
+        
+        // También traer la última ubicación de TODOS para pintar los otros camiones
+        const { data: todos } = await db.from('repartidores').select('id');
+        if (todos) {
+            for (var i = 0; i < todos.length; i++) {
+                var rId = todos[i].id;
+                if (!vehiculosEnVivo[rId]) { // Si no está en el mapa, lo buscamos
+                    const { data: lastPos } = await db.from('gps_tracking').select('*').eq('repartidor_id', rId).order('created_at', { ascending: false }).limit(1);
+                    if (lastPos && lastPos.length > 0) actualizarMarcadorVivo(lastPos[0]);
+                }
+            }
+        }
     }
 }
-
-	
-
-		
-	
 
 
 // --- GEOCODIFICACIÓN: BUSCAR DIRECCIÓN ---
@@ -2895,83 +2907,93 @@ function escucharGPSRealtime(repartidorId) {
 
 
 // --- LÓGICA PRINCIPAL AL MOVERSE EL VEHÍCULO ---
-async function moverVehiculo(loc) {
+async function actualizarMarcadorVivo(loc) {
+    var repId = loc.repartidor_id;
     var lat = parseFloat(loc.lat);
     var lng = parseFloat(loc.lng);
-    // Leemos la velocidad que manda el celular (suele venir en m/s, lo pasamos a km/h)
     var speedMs = parseFloat(loc.velocidad) || 0; 
-    var speed = speedMs * 3.6; 
+    var speed = speedMs * 3.6; // km/h
 
-    document.getElementById("gpsSpeed").innerText = speed.toFixed(0);
+    // Buscar el color asignado a este repartidor
+    var repIndex = repartidoresCache.findIndex(r => String(r.id) === String(repId));
+    var color = repartidorColores[repIndex % repartidorColores.length] || '#000000';
+    var nombreRep = repartidoresCache[repIndex] ? repartidoresCache[repIndex].nombre : 'Desconocido';
 
-    // Mover o crear marcador del camión
-    if (vehiculoMarker) {
-        vehiculoMarker.setLatLng([lat, lng]);
+    // Si el camión no existe en el mapa, lo creamos con su color
+    if (!vehiculosEnVivo[repId]) {
+        var truckIcon = L.divIcon({ 
+            html: `<div style="color:${color}; font-size:28px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));">🚚</div>`, 
+            iconSize: [28, 28], 
+            className: '' 
+        });
+        var marker = L.marker([lat, lng], { icon: truckIcon }).addTo(gpsMap).bindPopup(`<b style="color:${color}">${nombreRep}</b>`);
+        vehiculosEnVivo[repId] = marker;
     } else {
-        var truckIcon = L.divIcon({ html: '🚚', iconSize: [30, 30], className: '' });
-        vehiculoMarker = L.marker([lat, lng], { icon: truckIcon }).addTo(gpsMap);
-    }
-    
-    // SINCRONIZAR MINI-MAPA EN RESUMEN
-    if (dashMap) {
-        if (dashVehiculoMarker) {
-            dashVehiculoMarker.setLatLng([lat, lng]);
-        } else {
-            var dashTruckIcon = L.divIcon({ html: '🚚', iconSize: [24, 24], className: '' });
-            dashVehiculoMarker = L.marker([lat, lng], { icon: dashTruckIcon }).addTo(dashMap);
-        }
-        dashMap.setView([lat, lng], 14);
+        // Si ya existe, solo movemos el marcador
+        vehiculosEnVivo[repId].setLatLng([lat, lng]);
     }
 
-    // Centrar mapa si está activado el seguimiento
-    if (seguirVehiculo) gpsMap.setView([lat, lng], 17);
-    rutaPolyline.addLatLng([lat, lng]);
+    // Actualizar velocidad y alertas SOLO del repartidor seleccionado
+    if (String(repId) === String(currentRepartidorId)) {
+        document.getElementById("gpsSpeed").innerText = speed.toFixed(0);
 
-    // Evaluar proximidad a puntos (20 metros)
-    var alertaActiva = false;
-    for (var i = 0; i < marcadoresCache.length; i++) {
-        var m = marcadoresCache[i];
-        var dist = getDistance(lat, lng, parseFloat(m.lat), parseFloat(m.lng));
-        
-        if (dist <= 20) {
-            alertaActiva = true;
-            document.getElementById("gpsAlertBox").classList.remove("hidden");
-            document.getElementById("gpsAlertText").innerText = "🚨 Llegando a " + m.nombre;
-            document.getElementById("gpsAlertSubtext").innerText = "Zona de descarga. Detención estimada: " + m.tiempo_detencion_min + " min.";
-            
-            if (currentAlertId !== m.id) {
-                currentAlertId = m.id;
-                stopStartTime = Date.now();
-                iniciarStopTimer();
-                const { data } = await db.from("gps_alerts").insert([{ device_id: currentRepartidorId, marker_id: m.id, llegada: new Date().toISOString() }]).select();
-                if(data && data[0]) window['currentAlertDbId'] = data[0].id;
-            }
-            
-            // Si está a menos de 3 km/h dentro del punto, mostrar cronómetro rojo
-            if(speed < 3 && currentAlertId === m.id) {
-                document.getElementById("gpsStopBox").classList.remove("hidden");
+        // SINCRONIZAR MINI-MAPA EN RESUMEN
+        if (dashMap) {
+            if (dashVehiculoMarker) {
+                dashVehiculoMarker.setLatLng([lat, lng]);
             } else {
-                document.getElementById("gpsStopBox").classList.add("hidden");
-                stopStartTime = Date.now(); 
+                var dashTruckIcon = L.divIcon({ html: `<div style="color:${color}; font-size:24px;">🚚</div>`, iconSize: [24, 24], className: '' });
+                dashVehiculoMarker = L.marker([lat, lng], { icon: dashTruckIcon }).addTo(dashMap);
             }
-            break;
+            dashMap.setView([lat, lng], 14);
         }
-    }
 
-    // Si salimos de todos los puntos
-    if (!alertaActiva) {
-        document.getElementById("gpsAlertBox").classList.add("hidden");
-        document.getElementById("gpsStopBox").classList.add("hidden");
-        resetStopTimer();
-        
-        if (currentAlertId !== null && window['currentAlertDbId']) {
-            await db.from("gps_alerts").update({ salida: new Date().toISOString() }).eq("id", window['currentAlertDbId']);
-            currentAlertId = null;
-            window['currentAlertDbId'] = null;
+        // Centrar mapa principal en el camión seleccionado
+        gpsMap.setView([lat, lng], 16);
+
+        // Lógica de Puntos de Interés (Geocercas)
+        var alertaActiva = false;
+        for (var i = 0; i < marcadoresCache.length; i++) {
+            var m = marcadoresCache[i];
+            var dist = getDistance(lat, lng, parseFloat(m.lat), parseFloat(m.lng));
+            
+            if (dist <= 20) {
+                alertaActiva = true;
+                document.getElementById("gpsAlertBox").classList.remove("hidden");
+                document.getElementById("gpsAlertText").innerText = "🚨 Llegando a " + m.nombre;
+                document.getElementById("gpsAlertSubtext").innerText = "Zona de descarga. Detención estimada: " + m.tiempo_detencion_min + " min.";
+                
+                if (currentAlertId !== m.id) {
+                    currentAlertId = m.id;
+                    stopStartTime = Date.now();
+                    iniciarStopTimer();
+                    await db.from("gps_alerts").insert([{ device_id: currentRepartidorId, marker_id: m.id, llegada: new Date().toISOString() }]);
+                }
+                
+                if(speed < 3 && currentAlertId === m.id) {
+                    document.getElementById("gpsStopBox").classList.remove("hidden");
+                } else {
+                    document.getElementById("gpsStopBox").classList.add("hidden");
+                    stopStartTime = Date.now(); 
+                }
+                break;
+            }
+        }
+
+        if (!alertaActiva) {
+            document.getElementById("gpsAlertBox").classList.add("hidden");
+            document.getElementById("gpsStopBox").classList.add("hidden");
+            resetStopTimer();
+            if (currentAlertId !== null) {
+                await db.from("gps_alerts").update({ salida: new Date().toISOString() }).eq("device_id", currentRepartidorId).is("salida", null);
+                currentAlertId = null;
+            }
         }
     }
 }
 
+
+		
 
 // --- FUNCIONES DEL CRONÓMETRO DE DETENCIÓN ---
 function iniciarStopTimer() {
@@ -3005,15 +3027,13 @@ function toggleSeguir() {
 }
 
 // --- HISTORIAL E INFORME DEL DÍA ---
-
 async function loadHistorialGPS() {
     if(!db || !currentRepartidorId) { alert("Seleccione un repartidor en la pestaña 'En Vivo' primero."); return; }
     
     document.getElementById("histFecha").innerText = new Date().toLocaleDateString('es-UY');
     var hoy = new Date().toISOString().split("T")[0];
 
-    // Dibujar Ruta Histórica desde gps_tracking
-    const { data: ruta } = await db.from("gps_tracking").select("*").eq("repartidor_id", currentRepartidorId).gte("created_at", hoy + "T00:00:00").lte("created_at", hoy + "T23:59:59").order("created_at");
+    const { data: ruta } = await db.from("gps_tracking").select("*").eq("repartidor_id", currentRepartidorId).gte("created_at", hoy + "T00:00:00").lte("created_at", hoy + "T23:59:59").order("created_at", { ascending: true });
     
     if (!gpsMapHist) {
         gpsMapHist = L.map('gpsMapHist').setView([-34.4833, -54.3333], 14);       
@@ -3023,19 +3043,49 @@ async function loadHistorialGPS() {
     histLayer = L.layerGroup().addTo(gpsMapHist);
 
     if (ruta && ruta.length > 0) {
-        var coords = ruta.map(r => [parseFloat(r.lat), parseFloat(r.lng)]);
-        L.polyline(coords, {color: 'blue', weight: 3}).addTo(histLayer);
-        gpsMapHist.fitBounds(coords);
+        var repIndex = repartidoresCache.findIndex(r => String(r.id) === String(currentRepartidorId));
+        var color = repartidorColores[repIndex % repartidorColores.length] || '#2563EB';
 
-        // Marcar paradas (Velocidad menor a 3 km/h) en el mapa
-        ruta.forEach(function(r) {
-            var speedMs = parseFloat(r.velocidad) || 0;
-            var speedKmh = speedMs * 3.6;
-            if(speedKmh < 3) {
-                L.circleMarker([r.lat, r.lng], {radius: 4, color: 'red', fillColor: 'red'}).addTo(histLayer).bindPopup("Detenido a las " + new Date(r.created_at).toLocaleTimeString('es-UY', {hour:'2-digit', minute:'2-digit'}));
+        var coords = ruta.map(r => [parseFloat(r.lat), parseFloat(r.lng)]);
+        
+        // Dibujar la línea de recorrido con el color del repartidor
+        L.polyline(coords, {color: color, weight: 5, opacity: 0.7}).addTo(histLayer);
+        
+        // Calcular y dibujar paradas mayores a 3 minutos
+        for (var i = 1; i < ruta.length; i++) {
+            var puntoAnterior = ruta[i-1];
+            var puntoActual = ruta[i];
+            var speedAnterior = (parseFloat(puntoAnterior.velocidad) || 0) * 3.6; // km/h
+            
+            // Si el punto anterior tenía velocidad casi 0
+            if (speedAnterior < 3) {
+                var fechaAnterior = new Date(puntoAnterior.created_at);
+                var fechaActual = new Date(puntoActual.created_at);
+                var diffMs = fechaActual - fechaAnterior;
+                var diffMins = Math.round(diffMs / 60000);
+                
+                // Si estuvo detenido más de 3 minutos, marcamos el punto en el mapa
+                if (diffMins >= 3) {
+                    var horaLlegada = fechaAnterior.toLocaleTimeString('es-UY', {hour:'2-digit', minute:'2-digit'});
+                    var horaSalida = fechaActual.toLocaleTimeString('es-UY', {hour:'2-digit', minute:'2-digit'});
+                    
+                    L.circleMarker([puntoAnterior.lat, puntoAnterior.lng], {
+                        radius: 8, 
+                        color: '#DC2626', 
+                        fillColor: '#FCA5A5', 
+                        fillOpacity: 0.8, 
+                        weight: 2
+                    }).addTo(histLayer).bindPopup(`<b>Detención: ${diffMins} min</b><br>De ${horaLlegada} a ${horaSalida}`);
+                }
             }
-        });
+        }
+
+        gpsMapHist.fitBounds(coords);
+    } else {
+        alert("No hay datos de ruta hoy para este repartidor.");
     }
+}
+
 
     // LÓGICA DE INFORME DE VISITAS
     const { data: marcadores } = await db.from("gps_markers").select("*").order("nombre");
