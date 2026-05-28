@@ -1355,7 +1355,52 @@ function mostrarTabGPS(tab) {
         loadHistorialGPS();
     }
 }
+// ==========================================
+// MAPA DEL PANEL DE CONTROL (DASHBOARD)
+// ==========================================
+var dashMap = null;
+var dashMarkers = {};
+var dashPolylines = {};
 
+function initDashboardMap() { 
+    if(document.getElementById("dashMap") && !dashMap) { 
+        dashMap = L.map('dashMap').setView([-34.4833, -54.3333], 13); 
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
+            attribution: '© OpenStreetMap' 
+        }).addTo(dashMap); 
+        loadDashboardRoutes(); // Cargar rutas de hoy al inicio
+    } 
+}
+
+async function loadDashboardRoutes() {
+    if(!db || !dashMap) return;
+    var hoy = new Date().toISOString().split("T")[0];
+    const { data: ruta } = await db.from("gps_tracking").select("*").gte("created_at", hoy + "T00:00:00").lte("created_at", hoy + "T23:59:59").order("created_at", { ascending: true });
+    
+    if (ruta && ruta.length > 0) {
+        var puntosPorRep = {};
+        ruta.forEach(p => {
+            var repId = String(p.repartidor_id);
+            if (!puntosPorRep[repId]) puntosPorRep[repId] = [];
+            puntosPorRep[repId].push([parseFloat(p.lat), parseFloat(p.lng)]);
+        });
+
+        for (var repId in puntosPorRep) {
+            var repIndex = repartidoresCache.findIndex(r => String(r.id) === repId);
+            var color = repartidorColores[repIndex % repartidorColores.length] || '#000000';
+            
+            // Dibujar línea de recorrido en Dashboard
+            dashPolylines[repId] = L.polyline(puntosPorRep[repId], {color: color, weight: 4, opacity: 0.6}).addTo(dashMap);
+            
+            // Dibujar camión en la última posición
+            var lastPos = puntosPorRep[repId][puntosPorRep[repId].length - 1];
+            var truckIcon = L.divIcon({ html: `<div style="color:${color}; font-size:20px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));">🚚</div>`, iconSize: [20, 20], className: '' });
+            dashMarkers[repId] = L.marker(lastPos, { icon: truckIcon }).addTo(dashMap);
+        }
+    }
+}
+
+        
 function initGPSMap() {
     if(!document.getElementById("gpsMap")) return;
     gpsMap = L.map('gpsMap').setView([-34.4833, -54.3333], 14);
