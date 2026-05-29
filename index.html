@@ -615,22 +615,28 @@
        
         window.onload = function() { inicializarSupabase(); };
         function mostrarSeccion(nombreSeccion, botonClickeado) {
-            var secciones = document.getElementsByClassName("view-section"); for(var i=0; i<secciones.length; i++) { secciones[i].classList.add("hidden"); }
-            document.getElementById("view-" + nombreSeccion).classList.remove("hidden");
-            var botones = document.getElementsByClassName("nav-btn"); for(var j=0; j<botones.length; j++) { botones[j].classList.remove("bg-blue-800", "font-bold"); }
-            botonClickeado.classList.add("bg-blue-800", "font-bold");
-            if(nombreSeccion === 'stock') loadStock(); 
-            if(nombreSeccion === 'ventas') { loadVentasHoy(); cargarSelectVentas(); loadPrecios(); } 
-            if(nombreSeccion === 'repartidores') loadRepartidoresWeb();
-            if(nombreSeccion === 'resumen') { loadStats(); setTimeout(function() { if(dashMap) dashMap.invalidateSize(); }, 200); }
-            if(nombreSeccion === 'finanzas') { loadFinanzas(); mostrarTabFinanzas('cobrar'); }
-            if(nombreSeccion === 'marketing') { if(typeof MarketingAI !== 'undefined') MarketingAI.init(); }
-                        if(nombreSeccion === 'gps') { 
-                cargarRepartidoresGPS(); 
-                // Forzar que siempre abra en la pestaña "En Vivo" y refresque el mapa
-                mostrarTabGPS('vivo');
-            }
-          
+    var secciones = document.getElementsByClassName("view-section"); 
+    for(var i=0; i<secciones.length; i++) { secciones[i].classList.add("hidden"); }
+    
+    document.getElementById("view-" + nombreSeccion).classList.remove("hidden");
+    
+    var botones = document.getElementsByClassName("nav-btn"); 
+    for(var j=0; j<botones.length; j++) { botones[j].classList.remove("bg-blue-800", "font-bold"); }
+    
+    botonClickeado.classList.add("bg-blue-800", "font-bold");
+
+    if(nombreSeccion === 'stock') loadStock(); 
+    if(nombreSeccion === 'ventas') { loadVentasHoy(); cargarSelectVentas(); loadPrecios(); } 
+    if(nombreSeccion === 'repartidores') loadRepartidoresWeb();
+    if(nombreSeccion === 'resumen') { loadStats(); setTimeout(function() { if(dashMap) dashMap.invalidateSize(); }, 200); }
+    if(nombreSeccion === 'finanzas') { loadFinanzas(); mostrarTabFinanzas('cobrar'); }
+    if(nombreSeccion === 'marketing') { if(typeof MarketingAI !== 'undefined') MarketingAI.init(); }
+    if(nombreSeccion === 'gps') { 
+        cargarRepartidoresGPS(); 
+        mostrarTabGPS('vivo');
+    }
+} // <--- ESTA LLAVE ES LA QUE SUELE PERDERSE
+            
 
         
       
