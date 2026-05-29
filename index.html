@@ -349,6 +349,17 @@
         <div class="bg-white p-4 rounded-lg shadow-sm" id="printableArea">
             <h3 class="font-bold text-gray-700 mb-4 text-center text-lg">Control de Puntos - <span id="histFecha"></span></h3>
             <table class="w-full text-left border-collapse text-sm">
+
+                            <table class="w-full text-left border-collapse text-sm">
+                <thead><tr class="bg-gray-200">
+                    <th class="p-2 border">Repartidor</th>
+                    <th class="p-2 border">Evento / Punto</th>
+                    <th class="p-2 border text-center">Hora</th>
+                    <th class="p-2 border text-center">Detalle</th>
+                    <th class="p-2 border text-center">Duración</th>
+                </tr></thead>
+                <tbody id="tablaHistorialGPS"></tbody>
+            </table>
                 <thead><tr class="bg-gray-200"><th class="p-2 border">Repartidor</th><th class="p-2 border">Punto</th><th class="p-2 border text-center">¿Visitado?</th><th class="p-2 border text-center">Tiempo</th><th class="p-2 border text-center">Estado</th></tr></thead>
                 <tbody id="tablaHistorialGPS"></tbody>
             </table>
@@ -1620,47 +1631,152 @@ async function loadHistorialGPS() {
     if(!db || repartidoresCache.length === 0) return;
     document.getElementById("histFecha").innerText = new Date().toLocaleDateString('es-UY');
     var hoy = new Date().toISOString().split("T")[0];
-    if (!gpsMapHist) { gpsMapHist = L.map('gpsMapHist').setView([-34.4833, -54.3333], 14); L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(gpsMapHist); }
+    
+    if (!gpsMapHist) { 
+        gpsMapHist = L.map('gpsMapHist').setView([-34.4833, -54.3333], 14); 
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(gpsMapHist); 
+    }
     for(var id in histLayers) { if(gpsMapHist.hasLayer(histLayers[id])) gpsMapHist.removeLayer(histLayers[id]); }
     histLayers = {};
 
     const { data: ruta } = await db.from("gps_tracking").select("*").gte("created_at", hoy + "T00:00:00").lte("created_at", hoy + "T23:59:59").order("created_at", { ascending: true });
     const { data: marcadores } = await db.from("gps_markers").select("*").order("nombre");
-    var tbody = document.getElementById("tablaHistorialGPS"); tbody.innerHTML = "";
+    var tbody = document.getElementById("tablaHistorialGPS"); 
+    tbody.innerHTML = "";
 
-    if (ruta && ruta.length > 0) {
-        var puntosPorRep = {};
-        ruta.forEach(p => { var rId = String(p.repartidor_id); if (!puntosPorRep[rId]) puntosPorRep[rId] = []; puntosPorRep[rId].push(p); });
+    if (!ruta || ruta.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5' class='p-4 text-center text-gray-400'>Sin datos GPS hoy.</td></tr>";
+        return;
+    }
 
-        for (var rId in puntosPorRep) {
-            var puntos = puntosPorRep[rId];
-            var repIndex = repartidoresCache.findIndex(r => String(r.id) === rId);
-            var color = repartidorColores[repIndex % repartidorColores.length] || '#000000';
-            var nombreRep = repartidoresCache[repIndex] ? repartidoresCache[repIndex].nombre : 'Desconocido';
-            var coords = puntos.map(p => [parseFloat(p.lat), parseFloat(p.lng)]);
-            histLayers[rId] = L.layerGroup().addTo(gpsMapHist);
-            L.polyline(coords, {color: color, weight: 4, opacity: 0.7}).addTo(histLayers[rId]);
+    // Agrupar puntos por repartidor
+    var puntosPorRep = {};
+    var todasLasCoords = [];
+    ruta.forEach(p => {
+        var rId = String(p.repartidor_id);
+        if (!puntosPorRep[rId]) puntosPorRep[rId] = [];
+        puntosPorRep[rId].push(p);
+        todasLasCoords.push([parseFloat(p.lat), parseFloat(p.lng)]);
+    });
 
-            var enGeocerca = {}; var visitas = {};
-            if(marcadores) marcadores.forEach(m => visitas[m.id] = { visitado: false, mins: 0 });
-            for (var i = 0; i < puntos.length; i++) {
-                var p = puntos[i]; var foundGeo = null;
-                if(marcadores) marcadores.forEach(m => { if (getDistance(parseFloat(p.lat), parseFloat(p.lng), parseFloat(m.lat), parseFloat(m.lng)) <= 20) foundGeo = m; });
-                if (foundGeo) { if (!enGeocerca[foundGeo.id]) enGeocerca[foundGeo.id] = new Date(p.created_at); } 
-                else { for (var geoId in enGeocerca) { var dur = (new Date(p.created_at) - enGeocerca[geoId]) / 60000; if (dur >= 3 && dur > visitas[geoId].mins) visitas[geoId] = { visitado: true, mins: Math.round(dur) }; delete enGeocerca[geoId]; } }
+    // Procesar cada repartidor
+    for (var rId in puntosPorRep) {
+        var puntos = puntosPorRep[rId];
+        var repIndex = repartidoresCache.findIndex(r => String(r.id) === rId);
+        var color = repartidorColores[repIndex % repartidorColores.length] || '#000000';
+        var nombreRep = repartidoresCache[repIndex] ? repartidoresCache[repIndex].nombre : 'Vehículo ' + rId;
+
+        // 1. Dibujar línea en el mapa
+        var coords = puntos.map(p => [parseFloat(p.lat), parseFloat(p.lng)]);
+        histLayers[rId] = L.layerGroup().addTo(gpsMapHist);
+        L.polyline(coords, {color: color, weight: 4, opacity: 0.7}).addTo(histLayers[rId]);
+
+        // 2. Calcular eventos cronológicos
+        var events = [];
+        var currentState = { isStopped: false, stopStart: null, inGeofence: null, geofenceStart: null };
+
+        for (var i = 0; i < puntos.length; i++) {
+            var p = puntos[i];
+            var speed = (parseFloat(p.velocidad) || 0) * 3.6;
+            var pTime = new Date(p.created_at);
+            var lat = parseFloat(p.lat);
+            var lng = parseFloat(p.lng);
+
+            // Verificar si está en una geocerca
+            var foundGeo = null;
+            if (marcadores) {
+                for (var j = 0; j < marcadores.length; j++) {
+                    if (getDistance(lat, lng, parseFloat(marcadores[j].lat), parseFloat(marcadores[j].lng)) <= 20) {
+                        foundGeo = marcadores[j];
+                        break;
+                    }
+                }
             }
-            if(marcadores) {
-                marcadores.forEach(m => {
-                    var vis = visitas[m.id] || { visitado: false, mins: 0 };
-                    var estado = vis.visitado ? "OK (> 3 min)" : (vis.mins > 0 ? "Paso rápido" : "No Visitado");
-                    tbody.innerHTML += `<tr><td class="p-2 border"><span class="font-bold" style="color:${color}">${nombreRep}</span></td><td class="p-2 border font-bold">${m.nombre}</td><td class="p-2 border text-center font-bold ${vis.visitado?'text-green-600':'text-red-600'}">${vis.visitado?'✅ SÍ':'❌ NO'}</td><td class="p-2 border text-center">${vis.mins>0?vis.mins+' min':'-'}</td><td class="p-2 border text-center text-xs">${estado}</td></tr>`;
-                });
+
+            // Lógica de Geocercas
+            if (foundGeo) {
+                if (!currentState.inGeofence || currentState.inGeofence.id !== foundGeo.id) {
+                    currentState.inGeofence = foundGeo;
+                    currentState.geofenceStart = pTime;
+                }
+            } else {
+                if (currentState.inGeofence) {
+                    var duration = Math.round((pTime - currentState.geofenceStart) / 60000);
+                    events.push({ time: currentState.geofenceStart, marker: currentState.inGeofence, duration: duration, type: 'visit' });
+                    currentState.inGeofence = null;
+                    currentState.geofenceStart = null;
+                }
+            }
+
+            // Lógica de Detenciones (Menos de 3 km/h)
+            if (speed < 3) {
+                if (!currentState.isStopped) {
+                    currentState.isStopped = true;
+                    currentState.stopStart = pTime;
+                }
+            } else {
+                if (currentState.isStopped) {
+                    var duration = Math.round((pTime - currentState.stopStart) / 60000);
+                    if (duration >= 3) {
+                        events.push({ time: currentState.stopStart, duration: duration, type: 'stop' });
+                    }
+                    currentState.isStopped = false;
+                    currentState.stopStart = null;
+                }
             }
         }
-        gpsMapHist.fitBounds(Object.values(puntosPorRep).flat().map(p => [parseFloat(p.lat), parseFloat(p.lng)]));
-    } else { tbody.innerHTML = "<tr><td colspan='5' class='p-4 text-center text-gray-400'>Sin datos hoy.</td></tr>"; }
+        
+        // Cerrar estados abiertos (Si terminó el día detenido o en un comercio)
+        if (currentState.inGeofence) {
+            var duration = Math.round((new Date() - currentState.geofenceStart) / 60000);
+            events.push({ time: currentState.geofenceStart, marker: currentState.inGeofence, duration: duration, type: 'visit' });
+        }
+        if (currentState.isStopped && (new Date() - currentState.stopStart) / 60000 >= 3) {
+            var duration = Math.round((new Date() - currentState.stopStart) / 60000);
+            events.push({ time: currentState.stopStart, duration: duration, type: 'stop' });
+        }
+
+        // Ordenar eventos por hora
+        events.sort((a, b) => a.time - b.time);
+
+        // 3. Pintar en la tabla
+        if (events.length === 0) {
+            tbody.innerHTML += `<tr><td class="p-2 border font-bold" style="color:${color}">${nombreRep}</td><td class="p-2 border text-center text-gray-400" colspan="4">Sin eventos registrados hoy</td></tr>`;
+        } else {
+            events.forEach(evt => {
+                var timeStr = evt.time.toLocaleTimeString('es-UY', {hour:'2-digit', minute:'2-digit'});
+                var description = "";
+                var status = "";
+                var durStr = evt.duration + " min";
+                
+                if (evt.type === 'visit') {
+                    description = `📍 ${evt.marker.nombre}`;
+                    status = evt.duration >= 3 ? `<span class="text-green-600 font-bold">✅ Visitado</span>` : `<span class="text-yellow-600 font-bold">🏃 Paso rápido</span>`;
+                } else if (evt.type === 'stop') {
+                    description = `🛑 Detenido en calle`;
+                    status = `<span class="text-red-600 font-bold">Pausa</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-2 border font-bold" style="color:${color}">${nombreRep}</td>
+                        <td class="p-2 border">${description}</td>
+                        <td class="p-2 border text-center">${timeStr}</td>
+                        <td class="p-2 border text-center">${status}</td>
+                        <td class="p-2 border text-center font-bold">${durStr}</td>
+                    </tr>
+                `;
+            });
+        }
+    }
+
+    // Ajustar zoom del mapa para que entren todos los recorridos
+    if (todasLasCoords.length > 0) {
+        gpsMapHist.fitBounds(todasLasCoords);
+    }
     setTimeout(function(){ gpsMapHist.invalidateSize(); }, 400);
 }
+       
 
 function imprimirHistorialGPS() { window.print(); }
 
