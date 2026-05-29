@@ -1412,12 +1412,6 @@ function initGPSMap() {
     });
     setTimeout(function(){ gpsMap.invalidateSize(); }, 400);
     
-    // 👇 CAMIÓN DE PRUEBA (Para ver si el mapa dibuja bien)
-    var testIcon = L.divIcon({ html: `<div style="color:#2563EB; font-size:32px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));">🚚</div>`, iconSize: [32, 32], className: '' });
-    L.marker([-34.4833, -54.3333], { icon: testIcon }).addTo(gpsMap).bindPopup("<b>Camión de Prueba</b>");
-    console.log("✅ Mapa GPS inicializado y camión de prueba dibujado.");
-    // 👆 FIN PRUEBA
-
     loadMarcadores(); 
     escucharGPSRealtimeGlobal();
 }
@@ -1498,6 +1492,7 @@ function escucharGPSRealtimeGlobal() {
 }
 
 async function procesarPuntoGPS(loc) {
+    console.log("📡 Punto GPS recibido de Supabase:", loc); // <--- AGREGAR ESTA LÍNEA
     var repId = String(loc.repartidor_id);
     var lat = parseFloat(loc.lat); var lng = parseFloat(loc.lng);
     var speedKmh = (parseFloat(loc.velocidad) || 0) * 3.6;
