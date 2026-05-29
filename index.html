@@ -1094,15 +1094,18 @@ async function descontarGasTuboAutomatico(kilosADescontar) {  // ✅ español
         if (cli && !cli.permite_fiado) { alert("Este cliente NO tiene permitido fiado."); return; } 
     } 
 
-    var ventaData = { 
-        cliente_id: clienteId ? parseInt(clienteId) : null, 
-        tipo_venta: tipo, 
-        forma_pago: metodoPago, 
-        total: totalVenta, 
-        estado: (metodoPago === 'cuenta_corriente') ? 'pendiente' : 'pagada', 
-        tipo_cliente: tipoClienteSeleccionado || 'consumidor_final', // <--- AGREGAR ESTA LÍNEA
-        fecha: new Date().toISOString() 
-    }; 
+            var ventaData = { 
+                cliente_id: clienteId ? parseInt(clienteId) : null, 
+                tipo_venta: tipo, 
+                forma_pago: metodoPago, 
+                total: totalVenta, 
+                estado: (metodoPago === 'cuenta_corriente') ? 'pendiente' : 'pagada', 
+                tipo_cliente: tipoClienteSeleccionado || 'consumidor_final',
+                tipo_garrafa: 'mixto', // Lo fijamos como mixto ya que se guarda en el detalle
+                cantidad: cantLlenas + cantVacias + cantDefect, // <--- SUMAMOS LAS UNIDADES
+                fecha: new Date().toISOString() 
+            }; 
+         
 
     var rv = await db.from("ventas").insert([ventaData]).select(); 
     if (rv.error) { alert("Error al guardar venta: " + rv.error.message); return; } 
