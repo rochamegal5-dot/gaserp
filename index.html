@@ -1349,7 +1349,16 @@ function obtenerColorVehiculo(repId) {
     }
     return coloresAsignados[repId];
 }
+var repStates = {}; // Guarda el estado (detenido/moviéndose) de cada camión
 
+function agregarEventoVivo(hora, nombre, evento) {
+    var tbody = document.getElementById("tablaVivoGPS");
+    if(!tbody) return;
+    var tr = document.createElement("tr");
+    tr.className = "border-b hover:bg-gray-50";
+    tr.innerHTML = `<td class="p-1 border">${hora}</td><td class="p-1 border font-bold">${nombre}</td><td class="p-1 border">${evento}</td>`;
+    tbody.insertBefore(tr, tbody.firstChild); // Inserta arriba
+}
         function mostrarTabGPS(tab) {
     var vivoDiv = document.getElementById("gpsVivo");
     var histDiv = document.getElementById("gpsHistorial");
@@ -1505,17 +1514,18 @@ async function procesarPuntoGPS(loc) {
     var repId = String(loc.repartidor_id);
     var lat = parseFloat(loc.lat); 
     var lng = parseFloat(loc.lng);
-    var speedKmh = (parseFloat(loc.velocidad) || 0) * 3.6; // Tu app manda m/s, lo pasamos a km/h
+    var speedMs = parseFloat(loc.velocidad) || 0; 
+    var speedKmh = speedMs * 3.6; // Tu app nativa mide la velocidad en m/s, lo pasamos a km/h
     
     var nombreRep = "Vehículo " + repId;
-    var color = obtenerColorVehiculo(repId); // Función que armamos para fijar colores
+    var color = obtenerColorVehiculo(repId); // Usa el sistema de colores fijos
     
-    // Buscar el nombre real del cache
+    // Intentar obtener el nombre real del cache
     for (var i = 0; i < repartidoresCache.length; i++) {
         if (String(repartidoresCache[i].id) === repId) { nombreRep = repartidoresCache[i].nombre; break; }
     }
 
-    // Dibujar o mover el camión en el mapa (Sin líneas)
+    // 1. Mover o crear camión en el mapa (Sin líneas)
     if (!vehiculosEnVivo[repId]) {
         var truckIcon = L.divIcon({ 
             html: `<div style="color:${color}; font-size:32px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));">🚚</div>`, 
@@ -1526,14 +1536,83 @@ async function procesarPuntoGPS(loc) {
         vehiculosEnVivo[repId].setLatLng([lat, lng]); 
     }
 
-    // Si es el que estamos siguiendo, lo centramos y mostramos velocidad
+    // 2. Mover en Dashboard
+    if (dashMap) {
+        if (dashMarkers[repId]) { dashMarkers[repId].setLatLng([lat, lng]); } 
+        else { 
+            var dIcon = L.divIcon({ html: `<div style="color:${color}; font-size:20px;">🚚</div>`, iconSize: [20, 20], className: '' }); 
+            dashMarkers[repId] = L.marker([lat, lng], { icon: dIcon }).addTo(dashMap); 
+        }
+        if (dashPolylines[repId]) { dashPolylines[repId].addLatLng([lat, lng]); }
+        else { dashPolylines[repId] = L.polyline([[lat, lng]], {color: color, weight: 4, opacity: 0.6}).addTo(dashMap); }
+    }
+
+    // 3. Inicializar estado del repartidor para el registro en vivo
+    if (!repStates[repId]) repStates[repId] = { isStopped: false, stopStart: null, loggedLongStop: false };
+    var state = repStates[repId];
+
+    // 4. Lógica exclusiva del VEHÍCULO SELECCIONADO (Velocidad, Centrado, Alertas y Registro)
     if (repId === String(currentRepartidorId)) {
         document.getElementById("gpsSpeed").innerText = speedKmh.toFixed(0);
         gpsMap.setView([lat, lng], 16);
+
+        // Detectar si está en una geoferca (20 metros)
+        var enGeocerca = null;
+        for (var i = 0; i < marcadoresCache.length; i++) {
+            var m = marcadoresCache[i];
+            if (getDistance(lat, lng, parseFloat(m.lat), parseFloat(m.lng)) <= 20) {
+                enGeocerca = m;
+                break;
+            }
+        }
+
+        var horaActual = new Date().toLocaleTimeString('es-UY', {hour:'2-digit', minute:'2-digit'});
+
+        // Si va a menos de 3 km/h, se considera DETENIDO
+        if (speedKmh < 3) {
+            if (!state.isStopped) {
+                state.isStopped = true;
+                state.stopStart = new Date();
+                state.loggedLongStop = false;
+            }
+            
+            var minsDetenido = (new Date() - state.stopStart) / 60000;
+
+            if (enGeocerca) {
+                document.getElementById("gpsAlertBox").classList.remove("hidden");
+                document.getElementById("gpsAlertText").innerText = "🚨 Detenido en " + enGeocerca.nombre;
+                document.getElementById("gpsAlertSubtext").innerText = "Lleva " + Math.round(minsDetenido) + " min detenido.";
+                
+                if (minsDetenido >= 3 && !state.loggedLongStop) {
+                    agregarEventoVivo(horaActual, nombreRep, "✅ Detenido en " + enGeocerca.nombre + " ("+Math.round(minsDetenido)+" min)");
+                    state.loggedLongStop = true;
+                }
+            } else {
+                document.getElementById("gpsAlertBox").classList.add("hidden");
+                if (minsDetenido >= 3 && !state.loggedLongStop) {
+                    agregarEventoVivo(horaActual, nombreRep, "🛑 Detenido en calle ("+Math.round(minsDetenido)+" min)");
+                    state.loggedLongStop = true;
+                }
+            }
+        } 
+        // Si va a más de 3 km/h, se considera EN MOVIMIENTO
+        else {
+            if (state.isStopped) {
+                // Si arranca y estaba en un comercio, vemos cuánto estuvo
+                if (enGeocerca && state.stopStart) {
+                    var duracion = Math.round((new Date() - state.stopStart) / 60000);
+                    if (duracion < 3) {
+                        agregarEventoVivo(horaActual, nombreRep, "🏃 Pasó por " + enGeocerca.nombre + " sin detenerse (< 3 min)");
+                    }
+                }
+                state.isStopped = false;
+                state.stopStart = null;
+            }
+            document.getElementById("gpsAlertBox").classList.add("hidden");
+        }
     }
 }
-
-
+       
 
    
 // --- HISTORIAL (CON líneas) ---
