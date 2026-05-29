@@ -271,26 +271,19 @@
         <button onclick="mostrarTabGPS('historial')" id="tabGPSHist" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent">📊 Historial del Día</button>
     </div>
 
-        <div id="gpsVivo">
+    <div id="gpsVivo">
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        ... (todo el contenido vivo) ...
-        </div>
-    </div>
-
-    
-
-               
-            <!-- COLUMNA IZQUIERDA: MAPA (3 columnas) -->
+            
+            <!-- MAPA EN VIVO (Sin líneas, solo camiones de colores) -->
             <div class="lg:col-span-3 bg-white p-2 rounded-lg shadow-sm relative" style="min-height: 550px;">
                 <div id="gpsMap" style="height: 100%; width: 100%; border-radius: 0.5rem; z-index: 1;"></div>
                 
-                <!-- Alerta y Velocidad FLOTANDO sobre el mapa (No ocupan espacio extra) -->
-                <div id="gpsAlertBox" class="hidden absolute top-4 left-4 z-10 bg-orange-100 border-l-4 border-orange-500 text-orange-800 p-3 rounded shadow-lg" role="alert" style="max-width: 300px;">
+                <div id="gpsAlertBox" class="hidden absolute top-4 left-4 z-10 bg-orange-100 border-l-4 border-orange-500 text-orange-800 p-3 rounded shadow-lg" style="max-width: 300px;">
                     <p class="font-bold text-base" id="gpsAlertText">🚨 Alerta</p>
                     <p class="text-xs" id="gpsAlertSubtext"></p>
                 </div>
 
-                <div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+                <div class="absolute top-4 right-4 z-10">
                     <div class="bg-white bg-opacity-90 px-4 py-2 rounded-lg shadow-md text-center">
                         <p class="text-xs text-gray-500 font-bold">VELOCIDAD</p>
                         <p id="gpsSpeed" class="text-3xl font-black text-blue-700">0</p>
@@ -299,10 +292,10 @@
                 </div>
             </div>
 
-            <!-- COLUMNA DERECHA: CONTROLES (1 columna) -->
+            <!-- PANEL DERECHO -->
             <div class="space-y-4">
                 
-                <!-- SELECCIÓN DE VEHÍCULO (Solo acá) -->
+                <!-- VEHÍCULO -->
                 <div class="bg-white p-4 rounded-lg shadow-sm">
                     <h3 class="font-bold text-gray-700 mb-2">🚚 Vehículo</h3>
                     <select id="selRepartidor" class="w-full border rounded p-2 text-sm mb-2" disabled>
@@ -346,7 +339,7 @@
         </div>
     </div>
 
-    <!-- HISTORIAL -->
+    <!-- HISTORIAL (Con líneas de colores) -->
     <div id="gpsHistorial" class="hidden">
         <div class="bg-white p-4 rounded-lg shadow-sm mb-4 flex justify-between items-center no-print">
             <h3 class="font-bold text-gray-700">Recorridos del Día</h3>
@@ -362,6 +355,7 @@
         </div>
     </div>
 </div>
+    ////        
 
        
           
@@ -1370,19 +1364,56 @@ var repartidorColores = ['#2563EB', '#DC2626', '#16A34A', '#D97706', '#7C3AED', 
 }
 
 // ==========================================
-// MAPA DEL PANEL DE CONTROL (DASHBOARD)
+// MÓDULO GPS Y DASHBOARD (CÓDIGO UNIFICADO)
 // ==========================================
-var dashMap = null;
+var gpsMap = null, gpsMapHist = null, dashMap = null;
+var vehiculosEnVivo = {}; 
 var dashMarkers = {};
 var dashPolylines = {};
+var histLayers = {}, poisLayer = null;
+var marcadoresCache = [];
+var currentRepartidorId = null;
+var gpsRealtimeChannel = null;
+var repartidorColores = ['#2563EB', '#DC2626', '#16A34A', '#D97706', '#7C3AED', '#DB2777', '#0891B2', '#4338CA'];
+
+// --- PESTAÑAS GPS ---
+function mostrarTabGPS(tab) {
+    document.getElementById("gpsVivo").classList.add("hidden");
+    document.getElementById("gpsHistorial").classList.add("hidden");
+    document.getElementById("tabGPSVivo").className = "py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent";
+    document.getElementById("tabGPSHist").className = "py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent";
+
+    if (tab === 'vivo') {
+        document.getElementById("gpsVivo").classList.remove("hidden");
+        document.getElementById("tabGPSVivo").className = "py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600";
+        if (!gpsMap) { initGPSMap(); } else { setTimeout(function(){ gpsMap.invalidateSize(); }, 300); }
+    } else {
+        document.getElementById("gpsHistorial").classList.remove("hidden");
+        document.getElementById("tabGPSHist").className = "py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600";
+        loadHistorialGPS();
+    }
+}
+
+// --- MAPAS PRINCIPALES ---
+function initGPSMap() {
+    if(!document.getElementById("gpsMap")) return;
+    gpsMap = L.map('gpsMap').setView([-34.4833, -54.3333], 14);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(gpsMap);
+    poisLayer = L.layerGroup().addTo(gpsMap);
+    gpsMap.on('click', function(e) {
+        document.getElementById("mkLat").value = e.latlng.lat.toFixed(6);
+        document.getElementById("mkLng").value = e.latlng.lng.toFixed(6);
+    });
+    setTimeout(function(){ gpsMap.invalidateSize(); }, 400);
+    loadMarcadores(); 
+    escucharGPSRealtimeGlobal();
+}
 
 function initDashboardMap() { 
     if(document.getElementById("dashMap") && !dashMap) { 
         dashMap = L.map('dashMap').setView([-34.4833, -54.3333], 13); 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
-            attribution: '© OpenStreetMap' 
-        }).addTo(dashMap); 
-        loadDashboardRoutes(); // Cargar rutas de hoy al inicio
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(dashMap); 
+        loadDashboardRoutes(); 
     } 
 }
 
@@ -1390,47 +1421,21 @@ async function loadDashboardRoutes() {
     if(!db || !dashMap) return;
     var hoy = new Date().toISOString().split("T")[0];
     const { data: ruta } = await db.from("gps_tracking").select("*").gte("created_at", hoy + "T00:00:00").lte("created_at", hoy + "T23:59:59").order("created_at", { ascending: true });
-    
     if (ruta && ruta.length > 0) {
         var puntosPorRep = {};
-        ruta.forEach(p => {
-            var repId = String(p.repartidor_id);
-            if (!puntosPorRep[repId]) puntosPorRep[repId] = [];
-            puntosPorRep[repId].push([parseFloat(p.lat), parseFloat(p.lng)]);
-        });
-
-        for (var repId in puntosPorRep) {
-            var repIndex = repartidoresCache.findIndex(r => String(r.id) === repId);
+        ruta.forEach(p => { var rId = String(p.repartidor_id); if (!puntosPorRep[rId]) puntosPorRep[rId] = []; puntosPorRep[rId].push([parseFloat(p.lat), parseFloat(p.lng)]); });
+        for (var rId in puntosPorRep) {
+            var repIndex = repartidoresCache.findIndex(r => String(r.id) === rId);
             var color = repartidorColores[repIndex % repartidorColores.length] || '#000000';
-            
-            // Dibujar línea de recorrido en Dashboard
-            dashPolylines[repId] = L.polyline(puntosPorRep[repId], {color: color, weight: 4, opacity: 0.6}).addTo(dashMap);
-            
-            // Dibujar camión en la última posición
-            var lastPos = puntosPorRep[repId][puntosPorRep[repId].length - 1];
-            var truckIcon = L.divIcon({ html: `<div style="color:${color}; font-size:20px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));">🚚</div>`, iconSize: [20, 20], className: '' });
-            dashMarkers[repId] = L.marker(lastPos, { icon: truckIcon }).addTo(dashMap);
+            dashPolylines[rId] = L.polyline(puntosPorRep[rId], {color: color, weight: 4, opacity: 0.6}).addTo(dashMap);
+            var lastPos = puntosPorRep[rId][puntosPorRep[rId].length - 1];
+            var truckIcon = L.divIcon({ html: `<div style="color:${color}; font-size:20px;">🚚</div>`, iconSize: [20, 20], className: '' });
+            dashMarkers[rId] = L.marker(lastPos, { icon: truckIcon }).addTo(dashMap);
         }
     }
 }
 
-        
-function initGPSMap() {
-    if(!document.getElementById("gpsMap")) return;
-    gpsMap = L.map('gpsMap').setView([-34.4833, -54.3333], 14);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(gpsMap);
-    poisLayer = L.layerGroup().addTo(gpsMap);
-    
-    gpsMap.on('click', function(e) {
-        document.getElementById("mkLat").value = e.latlng.lat.toFixed(6);
-        document.getElementById("mkLng").value = e.latlng.lng.toFixed(6);
-    });
-    
-    setTimeout(function(){ gpsMap.invalidateSize(); }, 300);
-    loadMarcadores(); 
-    escucharGPSRealtimeGlobal();
-}
-
+// --- SELECCIÓN DE REPARTIDOR ---
 async function cargarRepartidoresGPS() {
     if(!db) return;
     const { data, error } = await db.from("repartidores").select("id, nombre").order("nombre");
@@ -1438,9 +1443,7 @@ async function cargarRepartidoresGPS() {
     repartidoresCache = data || [];
     var sel = document.getElementById("selRepartidor");
     sel.innerHTML = '<option value="">-- Seleccione un vehículo --</option>';
-    if (data && data.length > 0) {
-        data.forEach(function(r) { sel.innerHTML += '<option value="'+r.id+'">'+r.nombre+'</option>'; });
-    }
+    if (data && data.length > 0) { data.forEach(function(r) { sel.innerHTML += '<option value="'+r.id+'">'+r.nombre+'</option>'; }); }
     var savedId = localStorage.getItem('gps_repartidor_id');
     if (savedId) { sel.value = savedId; confirmarRepartidorGPS(); }
 }
@@ -1457,11 +1460,7 @@ function confirmarRepartidorGPS() {
     var nombreSeleccionado = sel.options[sel.selectedIndex].text;
     document.getElementById("txtNombreRepActivo").innerText = "🟢 En seguimiento: " + nombreSeleccionado;
     document.getElementById("txtNombreRepActivo").classList.remove("hidden");
-
-    // Si ya tenemos su posición en el mapa, centramos ahí
-    if (vehiculosEnVivo[currentRepartidorId] && gpsMap) {
-        gpsMap.setView(vehiculosEnVivo[currentRepartidorId].getLatLng(), 16);
-    }
+    if (vehiculosEnVivo[currentRepartidorId] && gpsMap) { gpsMap.setView(vehiculosEnVivo[currentRepartidorId].getLatLng(), 16); }
 }
 
 function modificarRepartidorGPS() {
@@ -1474,6 +1473,7 @@ function modificarRepartidorGPS() {
     document.getElementById("txtNombreRepActivo").classList.add("hidden");
 }
 
+// --- REALTIME Y PINTAR CAMIONES ---
 function escucharGPSRealtimeGlobal() {
     if(!db) return;
     if(gpsRealtimeChannel) db.removeChannel(gpsRealtimeChannel);
@@ -1485,53 +1485,37 @@ function escucharGPSRealtimeGlobal() {
 
 async function procesarPuntoGPS(loc) {
     var repId = String(loc.repartidor_id);
-    var lat = parseFloat(loc.lat); 
-    var lng = parseFloat(loc.lng);
-    var speedMs = parseFloat(loc.velocidad) || 0; 
-    var speedKmh = speedMs * 3.6;
+    var lat = parseFloat(loc.lat); var lng = parseFloat(loc.lng);
+    var speedKmh = (parseFloat(loc.velocidad) || 0) * 3.6;
     
-    // Buscar nombre y color del repartidor
-    var repIndex = -1;
-    var nombreRep = "Desconocido";
-    var color = "#000000";
+    var repIndex = -1; var nombreRep = "Desconocido"; var color = "#000000";
     for (var i = 0; i < repartidoresCache.length; i++) {
         if (String(repartidoresCache[i].id) === repId) {
-            repIndex = i;
-            nombreRep = repartidoresCache[i].nombre;
-            color = repartidorColores[i % repartidorColores.length];
-            break;
+            repIndex = i; nombreRep = repartidoresCache[i].nombre; color = repartidorColores[i % repartidorColores.length]; break;
         }
     }
 
-    // 1. CREAR O MOVER EL ÍCONO DEL CAMIÓN (SIN LÍNEAS)
+    // 1. Mover en Mapa Vivo (SIN líneas)
     if (!vehiculosEnVivo[repId]) {
-        var truckIcon = L.divIcon({ 
-            html: `<div style="color:${color}; font-size:32px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));">🚚</div>`, 
-            iconSize: [32, 32], 
-            className: '' 
-        });
+        var truckIcon = L.divIcon({ html: `<div style="color:${color}; font-size:32px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));">🚚</div>`, iconSize: [32, 32], className: '' });
         vehiculosEnVivo[repId] = L.marker([lat, lng], { icon: truckIcon }).addTo(gpsMap).bindPopup(`<b style="color:${color}">${nombreRep}</b>`);
-    } else { 
-        vehiculosEnVivo[repId].setLatLng([lat, lng]); 
-    }
+    } else { vehiculosEnVivo[repId].setLatLng([lat, lng]); }
 
-    // 2. ACTUALIZAR EL MAPA DEL RESUMEN (DASHBOARD) TAMBIÉN
-    if (typeof dashMap !== 'undefined' && dashMap) {
-        if (typeof dashMarkers !== 'undefined' && dashMarkers[repId]) { 
-            dashMarkers[repId].setLatLng([lat, lng]); 
-        } else { 
-            if(typeof dashMarkers === 'undefined') dashMarkers = {};
+    // 2. Mover en Dashboard
+    if (dashMap) {
+        if (dashMarkers[repId]) { dashMarkers[repId].setLatLng([lat, lng]); } 
+        else { 
             var dIcon = L.divIcon({ html: `<div style="color:${color}; font-size:20px;">🚚</div>`, iconSize: [20, 20], className: '' }); 
             dashMarkers[repId] = L.marker([lat, lng], { icon: dIcon }).addTo(dashMap); 
         }
+        if (dashPolylines[repId]) { dashPolylines[repId].addLatLng([lat, lng]); }
+        else { dashPolylines[repId] = L.polyline([[lat, lng]], {color: color, weight: 4, opacity: 0.6}).addTo(dashMap); }
     }
 
-    // 3. LÓGICA EXCLUSIVA DEL REPARTIDOR SELECCIONADO (Velocidad y Centrado)
+    // 3. Lógica del seleccionado
     if (repId === String(currentRepartidorId)) {
         document.getElementById("gpsSpeed").innerText = speedKmh.toFixed(0);
-        gpsMap.setView([lat, lng], 16); // Sigue al camión
-
-        // Lógica de Geocercas (Alertas de Puntos)
+        gpsMap.setView([lat, lng], 16);
         for (var i = 0; i < marcadoresCache.length; i++) {
             var m = marcadoresCache[i];
             if (getDistance(lat, lng, parseFloat(m.lat), parseFloat(m.lng)) <= 20) {
@@ -1539,23 +1523,17 @@ async function procesarPuntoGPS(loc) {
                 document.getElementById("gpsAlertText").innerText = "🚨 En zona: " + m.nombre;
                 document.getElementById("gpsAlertSubtext").innerText = "Velocidad: " + speedKmh.toFixed(0) + " km/h";
                 break;
-            } else {
-                document.getElementById("gpsAlertBox").classList.add("hidden");
-            }
+            } else { document.getElementById("gpsAlertBox").classList.add("hidden"); }
         }
     }
 }
 
-// --- HISTORIAL (Aquí SÍ se dibujan las líneas de recorrido) ---
+// --- HISTORIAL (CON líneas) ---
 async function loadHistorialGPS() {
     if(!db || repartidoresCache.length === 0) return;
     document.getElementById("histFecha").innerText = new Date().toLocaleDateString('es-UY');
     var hoy = new Date().toISOString().split("T")[0];
-    
-    if (!gpsMapHist) { 
-        gpsMapHist = L.map('gpsMapHist').setView([-34.4833, -54.3333], 14); 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(gpsMapHist); 
-    }
+    if (!gpsMapHist) { gpsMapHist = L.map('gpsMapHist').setView([-34.4833, -54.3333], 14); L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(gpsMapHist); }
     for(var id in histLayers) { if(gpsMapHist.hasLayer(histLayers[id])) gpsMapHist.removeLayer(histLayers[id]); }
     histLayers = {};
 
@@ -1572,13 +1550,10 @@ async function loadHistorialGPS() {
             var repIndex = repartidoresCache.findIndex(r => String(r.id) === rId);
             var color = repartidorColores[repIndex % repartidorColores.length] || '#000000';
             var nombreRep = repartidoresCache[repIndex] ? repartidoresCache[repIndex].nombre : 'Desconocido';
-
-            // DIBUJAR LÍNEA DE RECORRIDO (Solo en historial)
             var coords = puntos.map(p => [parseFloat(p.lat), parseFloat(p.lng)]);
             histLayers[rId] = L.layerGroup().addTo(gpsMapHist);
             L.polyline(coords, {color: color, weight: 4, opacity: 0.7}).addTo(histLayers[rId]);
 
-            // Calcular visitas
             var enGeocerca = {}; var visitas = {};
             if(marcadores) marcadores.forEach(m => visitas[m.id] = { visitado: false, mins: 0 });
             for (var i = 0; i < puntos.length; i++) {
@@ -1587,8 +1562,6 @@ async function loadHistorialGPS() {
                 if (foundGeo) { if (!enGeocerca[foundGeo.id]) enGeocerca[foundGeo.id] = new Date(p.created_at); } 
                 else { for (var geoId in enGeocerca) { var dur = (new Date(p.created_at) - enGeocerca[geoId]) / 60000; if (dur >= 3 && dur > visitas[geoId].mins) visitas[geoId] = { visitado: true, mins: Math.round(dur) }; delete enGeocerca[geoId]; } }
             }
-            
-            // Pintar tabla
             if(marcadores) {
                 marcadores.forEach(m => {
                     var vis = visitas[m.id] || { visitado: false, mins: 0 };
@@ -1604,6 +1577,7 @@ async function loadHistorialGPS() {
 
 function imprimirHistorialGPS() { window.print(); }
 
+// --- MARCADORES Y UTILIDADES ---
 function getDistance(lat1, lon1, lat2, lon2) { var R = 6371000; var dLat = (lat2 - lat1) * Math.PI / 180; var dLon = (lon2 - lon1) * Math.PI / 180; var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2); var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c; }
 
 async function loadMarcadores() { 
@@ -1616,13 +1590,13 @@ async function loadMarcadores() {
     marcadoresCache.forEach(m => { 
         L.circle([m.lat, m.lng], { radius: 20, color: 'red', fillColor: '#fca5a5', fillOpacity: 0.3 }).addTo(poisLayer); 
         L.marker([m.lat, m.lng]).addTo(poisLayer).bindPopup(m.nombre); 
-        if(listaDiv) listaDiv.innerHTML += `<div class="p-2 bg-gray-50 rounded border flex justify-between items-center"><span class="font-bold">${m.nombre}</span><button onclick="eliminarMarcador(${m.id})" class="text-red-500 font-bold">✕</button></div>`;
+        if(listaDiv) listaDiv.innerHTML += `<div class="p-2 bg-gray-50 rounded border flex justify-between items-center"><span class="font-bold">${m.nombre}</span><button onclick="eliminarMarcador(${m.id})" class="text-red-500 font-bold cursor-pointer">✕</button></div>`;
     }); 
 }
 async function guardarMarcador() { var n = document.getElementById("mkNombre").value; var lat = parseFloat(document.getElementById("mkLat").value); var lng = parseFloat(document.getElementById("mkLng").value); if (!n || !lat || !lng) { alert("Complete nombre y ubicación."); return; } await db.from("gps_markers").insert([{ nombre: n, lat: lat, lng: lng, tiempo_detencion_min: 3 }]); document.getElementById("mkNombre").value = ""; document.getElementById("mkLat").value = ""; document.getElementById("mkLng").value = ""; alert("✅ Punto guardado."); loadMarcadores(); }
 async function eliminarMarcador(id) { if(!confirm("¿Eliminar punto?")) return; await db.from("gps_markers").delete().eq("id", id); loadMarcadores(); }
-//////
-     
+        
+
 
             // ==========================================
 // MÓDULO MARKETING IA (Completo)
