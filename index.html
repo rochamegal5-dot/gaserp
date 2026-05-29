@@ -1502,58 +1502,40 @@ function escucharGPSRealtimeGlobal() {
 }
 
 async function procesarPuntoGPS(loc) {
-    console.log("📡 Punto GPS recibido de Supabase:", loc); // <--- AGREGAR ESTA LÍNEA
     var repId = String(loc.repartidor_id);
-    var lat = parseFloat(loc.lat); var lng = parseFloat(loc.lng);
-    var speedKmh = (parseFloat(loc.velocidad) || 0) * 3.6;
-   
+    var lat = parseFloat(loc.lat); 
+    var lng = parseFloat(loc.lng);
+    var speedKmh = (parseFloat(loc.velocidad) || 0) * 3.6; // Tu app manda m/s, lo pasamos a km/h
+    
     var nombreRep = "Vehículo " + repId;
-    var color = obtenerColorVehiculo(repId);
-    // Intentar obtener el nombre real si ya cargó la lista
+    var color = obtenerColorVehiculo(repId); // Función que armamos para fijar colores
+    
+    // Buscar el nombre real del cache
     for (var i = 0; i < repartidoresCache.length; i++) {
         if (String(repartidoresCache[i].id) === repId) { nombreRep = repartidoresCache[i].nombre; break; }
     }
-    ///
-    var repIndex = -1; var nombreRep = "Desconocido"; var color = "#000000";
-    for (var i = 0; i < repartidoresCache.length; i++) {
-        if (String(repartidoresCache[i].id) === repId) {
-            repIndex = i; nombreRep = repartidoresCache[i].nombre; color = repartidorColores[i % repartidorColores.length]; break;
-        }
-    }
 
-    // 1. Mover en Mapa Vivo (SIN líneas)
+    // Dibujar o mover el camión en el mapa (Sin líneas)
     if (!vehiculosEnVivo[repId]) {
-        var truckIcon = L.divIcon({ html: `<div style="color:${color}; font-size:32px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));">🚚</div>`, iconSize: [32, 32], className: '' });
+        var truckIcon = L.divIcon({ 
+            html: `<div style="color:${color}; font-size:32px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));">🚚</div>`, 
+            iconSize: [32, 32], className: '' 
+        });
         vehiculosEnVivo[repId] = L.marker([lat, lng], { icon: truckIcon }).addTo(gpsMap).bindPopup(`<b style="color:${color}">${nombreRep}</b>`);
-    } else { vehiculosEnVivo[repId].setLatLng([lat, lng]); }
-
-    // 2. Mover en Dashboard
-    if (dashMap) {
-        if (dashMarkers[repId]) { dashMarkers[repId].setLatLng([lat, lng]); } 
-        else { 
-            var dIcon = L.divIcon({ html: `<div style="color:${color}; font-size:20px;">🚚</div>`, iconSize: [20, 20], className: '' }); 
-            dashMarkers[repId] = L.marker([lat, lng], { icon: dIcon }).addTo(dashMap); 
-        }
-        if (dashPolylines[repId]) { dashPolylines[repId].addLatLng([lat, lng]); }
-        else { dashPolylines[repId] = L.polyline([[lat, lng]], {color: color, weight: 4, opacity: 0.6}).addTo(dashMap); }
+    } else { 
+        vehiculosEnVivo[repId].setLatLng([lat, lng]); 
     }
 
-    // 3. Lógica del seleccionado
+    // Si es el que estamos siguiendo, lo centramos y mostramos velocidad
     if (repId === String(currentRepartidorId)) {
         document.getElementById("gpsSpeed").innerText = speedKmh.toFixed(0);
         gpsMap.setView([lat, lng], 16);
-        for (var i = 0; i < marcadoresCache.length; i++) {
-            var m = marcadoresCache[i];
-            if (getDistance(lat, lng, parseFloat(m.lat), parseFloat(m.lng)) <= 20) {
-                document.getElementById("gpsAlertBox").classList.remove("hidden");
-                document.getElementById("gpsAlertText").innerText = "🚨 En zona: " + m.nombre;
-                document.getElementById("gpsAlertSubtext").innerText = "Velocidad: " + speedKmh.toFixed(0) + " km/h";
-                break;
-            } else { document.getElementById("gpsAlertBox").classList.add("hidden"); }
-        }
     }
 }
 
+
+
+   
 // --- HISTORIAL (CON líneas) ---
 async function loadHistorialGPS() {
     if(!db || repartidoresCache.length === 0) return;
