@@ -1339,6 +1339,16 @@ var gpsRealtimeChannel = null;
 
 // Colores para diferenciar los repartidores (Azul, Rojo, Verde, Naranja, Violeta, Rosa, Cyan, Índigo)
 var repartidorColores = ['#2563EB', '#DC2626', '#16A34A', '#D97706', '#7C3AED', '#DB2777', '#0891B2', '#4338CA'];
+        var coloresAsignados = {}; // Guarda qué color le tocó a cada ID
+var colorIndex = 0;
+
+function obtenerColorVehiculo(repId) {
+    if (!coloresAsignados[repId]) {
+        coloresAsignados[repId] = repartidorColores[colorIndex % repartidorColores.length];
+        colorIndex++;
+    }
+    return coloresAsignados[repId];
+}
 
         function mostrarTabGPS(tab) {
     var vivoDiv = document.getElementById("gpsVivo");
@@ -1496,7 +1506,14 @@ async function procesarPuntoGPS(loc) {
     var repId = String(loc.repartidor_id);
     var lat = parseFloat(loc.lat); var lng = parseFloat(loc.lng);
     var speedKmh = (parseFloat(loc.velocidad) || 0) * 3.6;
-    
+   
+    var nombreRep = "Vehículo " + repId;
+    var color = obtenerColorVehiculo(repId);
+    // Intentar obtener el nombre real si ya cargó la lista
+    for (var i = 0; i < repartidoresCache.length; i++) {
+        if (String(repartidoresCache[i].id) === repId) { nombreRep = repartidoresCache[i].nombre; break; }
+    }
+    ///
     var repIndex = -1; var nombreRep = "Desconocido"; var color = "#000000";
     for (var i = 0; i < repartidoresCache.length; i++) {
         if (String(repartidoresCache[i].id) === repId) {
