@@ -271,9 +271,17 @@
         <button onclick="mostrarTabGPS('historial')" id="tabGPSHist" class="py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent">📊 Historial del Día</button>
     </div>
 
-    <div id="gpsVivo">
+        <div id="gpsVivo">
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            
+        ... (todo el contenido vivo) ...
+        </div>
+    </div>
+
+    <div id="gpsHistorial" class="hidden">
+        ... (todo el contenido historial) ...
+    </div>
+
+               
             <!-- COLUMNA IZQUIERDA: MAPA (3 columnas) -->
             <div class="lg:col-span-3 bg-white p-2 rounded-lg shadow-sm relative" style="min-height: 550px;">
                 <div id="gpsMap" style="height: 100%; width: 100%; border-radius: 0.5rem; z-index: 1;"></div>
@@ -625,11 +633,12 @@
             if(nombreSeccion === 'resumen') { loadStats(); setTimeout(function() { if(dashMap) dashMap.invalidateSize(); }, 200); }
             if(nombreSeccion === 'finanzas') { loadFinanzas(); mostrarTabFinanzas('cobrar'); }
             if(nombreSeccion === 'marketing') { if(typeof MarketingAI !== 'undefined') MarketingAI.init(); }
-            if(nombreSeccion === 'gps') { 
+                        if(nombreSeccion === 'gps') { 
                 cargarRepartidoresGPS(); 
-                setTimeout(function() { if (!gpsMap && document.getElementById("gpsMap")) { initGPSMap(); } else if (gpsMap) { gpsMap.invalidateSize(); } }, 300); 
+                // Forzar que siempre abra en la pestaña "En Vivo" y refresque el mapa
+                mostrarTabGPS('vivo');
             }
-        }
+          
 
         
       
@@ -1333,28 +1342,35 @@ var gpsRealtimeChannel = null;
 // Colores para diferenciar los repartidores (Azul, Rojo, Verde, Naranja, Violeta, Rosa, Cyan, Índigo)
 var repartidorColores = ['#2563EB', '#DC2626', '#16A34A', '#D97706', '#7C3AED', '#DB2777', '#0891B2', '#4338CA'];
 
-function mostrarTabGPS(tab) {
-    document.getElementById("gpsVivo").classList.add("hidden");
-    document.getElementById("gpsHistorial").classList.add("hidden");
+        function mostrarTabGPS(tab) {
+    var vivoDiv = document.getElementById("gpsVivo");
+    var histDiv = document.getElementById("gpsHistorial");
+    
+    // Ocultar ambos
+    vivoDiv.classList.add("hidden");
+    histDiv.classList.add("hidden");
+    
+    // Resetear estilos de pestañas
     document.getElementById("tabGPSVivo").className = "py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent";
     document.getElementById("tabGPSHist").className = "py-2 px-4 font-bold text-gray-500 border-b-2 border-transparent";
 
     if (tab === 'vivo') {
-        document.getElementById("gpsVivo").classList.remove("hidden");
+        vivoDiv.classList.remove("hidden");
         document.getElementById("tabGPSVivo").className = "py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600";
         
-        // Inicializar o refrescar mapa
-        if (!gpsMap && document.getElementById("gpsMap")) {
+        // INICIALIZAR O REFRESCAR MAPA EN VIVO (Clave para que no se ponga gris)
+        if (!gpsMap) {
             initGPSMap();
-        } else if (gpsMap) {
+        } else {
             setTimeout(function(){ gpsMap.invalidateSize(); }, 300);
         }
     } else {
-        document.getElementById("gpsHistorial").classList.remove("hidden");
+        histDiv.classList.remove("hidden");
         document.getElementById("tabGPSHist").className = "py-2 px-4 font-bold text-blue-600 border-b-2 border-blue-600";
         loadHistorialGPS();
     }
 }
+
 // ==========================================
 // MAPA DEL PANEL DE CONTROL (DASHBOARD)
 // ==========================================
