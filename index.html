@@ -1100,6 +1100,7 @@ async function descontarGasTuboAutomatico(kilosADescontar) {  // ✅ español
         forma_pago: metodoPago, 
         total: totalVenta, 
         estado: (metodoPago === 'cuenta_corriente') ? 'pendiente' : 'pagada', 
+        tipo_cliente: tipoClienteSeleccionado || 'consumidor_final', // <--- AGREGAR ESTA LÍNEA
         fecha: new Date().toISOString() 
     }; 
 
