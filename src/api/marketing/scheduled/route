@@ -1,0 +1,63 @@
+import { NextResponse } from 'next/server'
+import { supabaseAdmin as supabase } from '@/lib/supabase'
+
+export const dynamic = 'force-dynamic'
+
+export async function GET() {
+  try {
+    // Scheduled = campaigns with estado 'programada' or 'borrador' + programada_para
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('*')
+      .or('estado.eq.programada,estado.eq.borrador')
+      .not('programada_para', 'is', null)
+      .order('programada_para', { ascending: true })
+    if (error) {
+      console.error('[api/marketing/scheduled GET]', error.message)
+      if (error.message.includes('Could not find the table')) {
+        return NextResponse.json({ data: [], migration_required: true })
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json({ data: data || [] })
+  } catch (e: any) {
+    console.error('[api/marketing/scheduled GET]', e)
+    return NextResponse.json({ error: e.message || 'internal' }, { status: 500 })
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json().catch(() => ({}))
+    const now = new Date().toISOString()
+    const row: any = {
+      id: crypto.randomUUID(),
+      nombre: body.nombre || '',
+      canal: body.canal || 'whatsapp',
+      target: body.target || 'all',
+      mensaje: body.mensaje || '',
+      total_destinatarios: Number(body.totalDestinatarios || body.total_destinatarios || 0),
+      enviados: 0,
+      fallidos: 0,
+      estado: 'programada',
+      programada_para: body.programadaPara || body.programada_para || now,
+      iniciada_en: null,
+      completada_en: null,
+      filtro_json: body.filtroJson ? JSON.stringify(body.filtroJson) : (body.filtro_json || null),
+      resultados_json: null,
+      created_at: now,
+    }
+    const { data, error } = await supabase.from('campaigns').insert(row).select().single()
+    if (error) {
+      console.error('[api/marketing/scheduled POST]', error.message)
+      if (error.message.includes('Could not find the table')) {
+        return NextResponse.json({ data: null, migration_required: true })
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json({ data })
+  } catch (e: any) {
+    console.error('[api/marketing/scheduled POST]', e)
+    return NextResponse.json({ error: e.message || 'internal' }, { status: 500 })
+  }
+}
