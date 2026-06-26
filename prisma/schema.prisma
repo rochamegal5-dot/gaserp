@@ -1,0 +1,326 @@
+schema.prismagenerator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Producto {
+  id              String   @id @default(cuid())
+  nombre          String
+  tipo            String
+  costo           Int      @default(0)
+  precioVenta     Int      @default(0) @map("precio_venta")
+  precioComercio  Int      @default(0) @map("precio_comercio")
+  flete           Int      @default(0) @map("flete")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  ventas        Venta[]
+  remitoItems   RemitoItem[]
+  stockDeposito    StockDeposito?
+  stockRepartidor  StockRepartidor[]
+  movimientosStock MovimientoStock[]
+  presupuestoItems PresupuestoItem[]
+  @@map("productos")
+}
+
+model Cliente {
+  id        String  @id @default(cuid())
+  tipo      String  @default("particular")
+  telefono  String
+  email     String?
+  ci        String?
+  nombre1   String?
+  nombre2   String?
+  apellido1 String?
+  apellido2 String?
+  pais      String  @default("URUGUAY")
+  depto     String?
+  ciudad    String?
+  calle     String?
+  numero    String?
+  complejo  String?
+  apto      String?
+  entre1    String?
+  entre2    String?
+  latitud   Float?
+  longitud  Float?
+  fiado     Boolean @default(false)
+  origen    String  @default("manual")
+  ultimaActividad DateTime? @map("ultima_actividad")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ventas Venta[]
+  presupuestos Presupuesto[]
+  @@map("clientes")
+}
+
+model Proveedor {
+  id        String  @id @default(cuid())
+  nombre    String
+  cuit      String?
+  contacto  String?
+  telefono  String?
+  direccion String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  remitos Remito[]
+  @@map("proveedores")
+}
+
+model Repartidor {
+  id       String  @id @default(cuid())
+  nombre   String
+  telefono String?
+  vehiculo String?
+  patente  String?
+  color    String  @default("#3b82f6")
+  activo   Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ventas          Venta[]
+  stockRepartidor StockRepartidor[]
+  jornadas         JornadaRepartidor[]
+  movimientosStock MovimientoStock[]
+  costosRepartidor CostoRepartidor[]
+  @@map("repartidores")
+}
+
+model Remito {
+  id              String    @id @default(cuid())
+  proveedorId     String    @map("proveedor_id")
+  numero          String
+  montoTotal      Int       @default(0) @map("monto_total")
+  saldoPendiente  Int       @default(0) @map("saldo_pendiente")
+  pagado          Boolean   @default(false)
+  fechaPago       DateTime? @map("fecha_pago")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  proveedor Proveedor   @relation(fields: [proveedorId], references: [id])
+  items     RemitoItem[]
+  @@map("remitos")
+}
+
+model RemitoItem {
+  id               String @id @default(cuid())
+  remitoId         String @map("remito_id")
+  productoId       String @map("producto_id")
+  entranLlenas     Int    @default(0) @map("entran_llenas")
+  salenVacias      Int    @default(0) @map("salen_vacias")
+  salenDefectuosas Int    @default(0) @map("salen_defectuosas")
+  remito   Remito  @relation(fields: [remitoId], references: [id], onDelete: Cascade)
+  producto Producto @relation(fields: [productoId], references: [id])
+  @@map("remito_items")
+}
+
+model StockDeposito {
+  id          String @id @default(cuid())
+  productoId  String @unique @map("producto_id")
+  llenas      Int    @default(0)
+  vacias      Int    @default(0)
+  defectuosas Int    @default(0)
+  producto Producto @relation(fields: [productoId], references: [id])
+  @@map("stock_deposito")
+}
+
+model StockRepartidor {
+  id           String @id @default(cuid())
+  repartidorId String @map("repartidor_id")
+  productoId   String @map("producto_id")
+  llenas       Int    @default(0)
+  vacias       Int    @default(0)
+  defectuosas  Int    @default(0)
+  repartidor Repartidor @relation(fields: [repartidorId], references: [id])
+  producto   Producto   @relation(fields: [productoId], references: [id])
+  @@unique([repartidorId, productoId])
+  @@map("stock_repartidor")
+}
+
+model JornadaRepartidor {
+  id          String    @id @default(cuid())
+  repartidorId String   @map("repartidor_id")
+  fecha       DateTime  @default(now())
+  estado      String    @default("abierta")
+  cerradaAt   DateTime? @map("cerrada_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  repartidor Repartidor @relation(fields: [repartidorId], references: [id])
+  @@map("jornadas_repartidor")
+}
+
+model Venta {
+  id                String   @id @default(cuid())
+  origen            String   @default("web")
+  tipoVenta         String   @default("intercambio")
+  repartidorId      String?  @map("repartidor_id")
+  clienteId         String?  @map("cliente_id")
+  productoId        String?  @map("producto_id")
+  cantidadLlenas    Int      @default(0) @map("cantidad_llenas")
+  cantidadVacias    Int      @default(0) @map("cantidad_vacias")
+  cantidadDefectuosas Int    @default(0) @map("cantidad_defectuosas")
+  kilosRecarga      Float    @default(0) @map("kilos_recarga")
+  total             Int      @default(0)
+  saldoPendiente    Int      @default(0) @map("saldo_pendiente")
+  metodoPago        String   @default("efectivo") @map("metodo_pago")
+  estado            String   @default("Cobrado")
+  presupuestoId     String?  @map("presupuesto_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  repartidor  Repartidor?  @relation(fields: [repartidorId], references: [id])
+  cliente     Cliente?     @relation(fields: [clienteId], references: [id])
+  producto    Producto?    @relation(fields: [productoId], references: [id])
+  presupuesto Presupuesto? @relation(fields: [presupuestoId], references: [id])
+  @@map("ventas")
+}
+
+model MovimientoStock {
+  id           String   @id @default(cuid())
+  tipoMov      String   @map("tipo_mov")
+  productoId   String?  @map("producto_id")
+  repartidorId String?  @map("repartidor_id")
+  llenas       Int      @default(0)
+  vacias       Int      @default(0)
+  defectuosas  Int      @default(0)
+  kilosGas     Float    @default(0) @map("kilos_gas")
+  observaciones String?
+  referenciaId String?  @map("referencia_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  producto   Producto?   @relation(fields: [productoId], references: [id])
+  repartidor Repartidor? @relation(fields: [repartidorId], references: [id])
+  @@map("movimientos_stock")
+}
+
+model MovimientoCaja {
+  id        String   @id @default(cuid())
+  tipo      String
+  concepto  String
+  monto     Int
+  forma     String   @default("efectivo")
+  detalle   String?
+  referenciaId String? @map("referencia_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("movimientos_caja")
+}
+
+model MovimientoCapital {
+  id        String   @id @default(cuid())
+  tipo      String
+  monto     Int
+  detalle   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("movimientos_capital")
+}
+
+model Configuracion {
+  id    String @id @default(cuid())
+  clave String @unique
+  valor String
+  @@map("configuraciones")
+}
+
+model Presupuesto {
+  id          String    @id @default(cuid())
+  clienteId   String?   @map("cliente_id")
+  clienteNombre String
+  estado      String    @default("pendiente")
+  total       Int       @default(0)
+  observaciones String?
+  validez     DateTime?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  cliente Cliente?         @relation(fields: [clienteId], references: [id])
+  items   PresupuestoItem[]
+  ventas  Venta[]
+  @@map("presupuestos")
+}
+
+model PresupuestoItem {
+  id            String  @id @default(cuid())
+  presupuestoId String  @map("presupuesto_id")
+  productoId    String? @map("producto_id")
+  productoNombre String
+  cantidad      Int     @default(1)
+  precioUnitario Int    @default(0) @map("precio_unitario")
+  subtotal      Int     @default(0)
+  presupuesto Presupuesto @relation(fields: [presupuestoId], references: [id], onDelete: Cascade)
+  producto    Producto?   @relation(fields: [productoId], references: [id])
+  @@map("presupuesto_items")
+}
+
+model CostoRepartidor {
+  id           String   @id @default(cuid())
+  repartidorId String   @map("repartidor_id")
+  tipo         String
+  monto        Int      @default(0)
+  fecha        DateTime @default(now())
+  detalle      String?
+  litros       Float?   @default(0)
+  kmOdometro   Int?     @default(0) @map("km_odometro")
+  periodoDesde DateTime? @map("periodo_desde")
+  periodoHasta DateTime? @map("periodo_hasta")
+  forma        String   @default("efectivo")
+  createdAt    DateTime @default(now()) @map("created_at")
+  repartidor Repartidor @relation(fields: [repartidorId], references: [id])
+  @@map("costos_repartidor")
+}
+
+model Campaign {
+  id            String   @id @default(cuid())
+  nombre        String
+  canal         String   @default("whatsapp")
+  target        String   @default("all")
+  mensaje       String
+  totalDestinatarios Int  @default(0) @map("total_destinatarios")
+  enviados      Int      @default(0)
+  fallidos      Int      @default(0)
+  estado        String   @default("borrador")
+  programadaPara DateTime? @map("programada_para")
+  iniciadaEn    DateTime? @map("iniciada_en")
+  completadaEn  DateTime? @map("completada_en")
+  filtroJson    String?  @map("filtro_json")
+  resultadosJson String? @map("resultados_json")
+  createdAt     DateTime @default(now()) @map("created_at")
+  @@map("campaigns")
+}
+
+model CampaignTemplate {
+  id          String   @id @default(cuid())
+  nombre      String
+  texto       String
+  canal       String   @default("whatsapp")
+  categoria   String?
+  favorita    Boolean  @default(false)
+  usosCount   Int      @default(0) @map("usos_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  @@map("campaign_templates")
+}
+
+model SocialConnection {
+  id          String   @id @default(cuid())
+  plataforma  String
+  accountId   String   @map("account_id")
+  accountName String?  @map("account_name")
+  accessToken String   @map("access_token")
+  tokenExpira DateTime? @map("token_expira")
+  scopes      String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  @@map("social_connections")
+}
+
+model SocialPost {
+  id          String   @id @default(cuid())
+  plataforma  String
+  postId      String   @map("post_id")
+  contenido   String
+  imageUrl    String?  @map("image_url")
+  permalink   String?
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  publicadoEn DateTime @map("publicado_en")
+  createdAt   DateTime @default(now()) @map("created_at")
+  @@index([plataforma, publicadoEn])
+  @@map("social_posts")
+}
