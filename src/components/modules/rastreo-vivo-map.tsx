@@ -8,10 +8,11 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
+  const puntosLayerRef = useRef<any>(null)
 
-  const filteredRepartidores = selectedRepId ? repartidores.filter(r => r.id === selectedRepId) : repartidores
-  const filteredUbicaciones = selectedRepId ? ubicaciones.filter(u => u.repartidor_id === selectedRepId) : ubicaciones
+  const ROCHA_CENTER: [number, number] = [-34.4833, -54.3317]
 
+  // ── 1) Crear mapa UNA SOLA VEZ ──
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
     import('leaflet').then((LModule) => {
@@ -22,34 +23,106 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       })
-      const ROCHA_CENTER: [number, number] = [-34.4833, -54.3317]
-      const center: [number, number] = filteredUbicaciones[0] ? [filteredUbicaciones[0].latitud, filteredUbicaciones[0].longitud] : ROCHA_CENTER
-      const map = L.map(containerRef.current!).setView(center, 14)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map)
+      const map = L.map(containerRef.current!).setView(ROCHA_CENTER, 14)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+      }).addTo(map)
+
+      // Layer group separado para puntos de referencia
+      puntosLayerRef.current = L.layerGroup().addTo(map)
+
       mapRef.current = map
-      puntosReferencia.forEach((p) => {
-        L.circleMarker([p.lat, p.lng], { radius: 8, color: '#10b981', fillColor: '#10b981', fillOpacity: 0.5 }).addTo(map).bindPopup(`<strong>${p.nombre}</strong>`)
-      })
     })
-    return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null } }
+    return () => {
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
+    }
   }, [])
 
+  // ── 2) Actualizar marcadores de repartidores cuando cambian los datos ──
   useEffect(() => {
     if (!mapRef.current) return
     const map = mapRef.current
+
+    // Limpiar marcadores anteriores
     markersRef.current.forEach((m) => map.removeLayer(m))
     markersRef.current = []
+
+    // Filtrar ubicaciones por repartidor seleccionado
+    const filteredUbi = selectedRepId
+      ? ubicaciones.filter(u => u.repartidor_id === selectedRepId)
+      : ubicaciones
+
     import('leaflet').then((LModule) => {
       const L = LModule.default
-      filteredRepartidores.forEach((r) => {
-        const ubi = filteredUbicaciones.find((u: any) => u.repartidor_id === r.id)
+      let hasMarker = false
+
+      repartidores.forEach((r) => {
+        // Solo mostrar repartidores que tienen ubicación (y filtrar si hay selección)
+        if (selectedRepId && r.id !== selectedRepId) return
+        const ubi = ubicaciones.find((u: any) => u.repartidor_id === r.id)
         if (!ubi) return
-        const icon = L.divIcon({ html: `<div style="background-color: ${r.color}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);"></div>`, className: '', iconSize: [20, 20] })
-        const marker = L.marker([ubi.latitud, ubi.longitud], { icon }).addTo(map).bindPopup(`<strong>${r.nombre}</strong><br>Velocidad: ${Math.round((ubi.velocidad || 0) * 3.6)} km/h${r.vehiculo ? '<br>Vehículo: ' + r.vehiculo : ''}`)
+
+        hasMarker = true
+        const icon = L.divIcon({
+          html: `<div style="
+            background-color: ${r.color || '#3b82f6'};
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          "></div>`,
+          className: '',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+        })
+        const marker = L.marker([ubi.latitud, ubi.longitud], { icon })
+          .addTo(map)
+          .bindPopup(
+            `<strong>${r.nombre}</strong><br/>` +
+            `Velocidad: ${Math.round((ubi.velocidad || 0) * 3.6)} km/h` +
+            (r.vehiculo ? `<br/>Vehículo: ${r.vehiculo}` : '') +
+            (r.patente ? `<br/>Patente: ${r.patente}` : '')
+          )
         markersRef.current.push(marker)
       })
+
+      // Re-centrar el mapa en la ubicación del repartidor seleccionado
+      if (filteredUbi.length > 0) {
+        const first = filteredUbi[0]
+        map.setView([first.latitud, first.longitud], 15, { animate: true })
+      } else if (!hasMarker) {
+        // Si no hay marcadores, volver al centro de Rocha
+        map.setView(ROCHA_CENTER, 14)
+      }
     })
   }, [repartidores, ubicaciones, selectedRepId])
+
+  // ── 3) Dibujar/actualizar puntos de referencia cuando cambian ──
+  useEffect(() => {
+    const layer = puntosLayerRef.current
+    if (!layer) return
+
+    // Limpiar puntos anteriores
+    layer.clearLayers()
+
+    if (!puntosReferencia || puntosReferencia.length === 0) return
+
+    import('leaflet').then((LModule) => {
+      const L = LModule.default
+      puntosReferencia.forEach((p) => {
+        if (!p.latitud || !p.longitud) return
+        L.circleMarker([p.latitud, p.longitud], {
+          radius: 8,
+          color: '#059669',
+          fillColor: '#10b981',
+          fillOpacity: 0.5,
+          weight: 2,
+        })
+          .bindPopup(`<strong>${p.nombre}</strong><br/>Lat: ${p.latitud}<br/>Lng: ${p.longitud}`)
+          .addTo(layer)
+      })
+    })
+  }, [puntosReferencia])
 
   return <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
 }
