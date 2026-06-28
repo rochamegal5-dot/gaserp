@@ -1,23 +1,35 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('[supabase] Faltan variables de entorno NEXT_PUBLIC_SUPABASE_URL y/o NEXT_PUBLIC_SUPABASE_ANON_KEY.')
-}
+let _supabase: SupabaseClient | null = null
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_, prop) {
+    if (!_supabase) {
+      _supabase = createClient(
+        supabaseUrl || 'https://placeholder.supabase.co',
+        supabaseAnonKey || 'placeholder-anon-key'
+      )
+    }
+    return (_supabase as any)[prop]
+  }
+})
 
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-anon-key'
-)
+let _supabaseAdmin: SupabaseClient | null = null
+export const supabaseAdmin: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_, prop) {
+    if (!_supabaseAdmin) {
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      _supabaseAdmin = serviceKey
+        ? createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
+        : supabase
+    }
+    return (_supabaseAdmin as any)[prop]
+  }
+})
 
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-export const supabaseAdmin = supabaseServiceKey
-  ? createClient(supabaseUrl, supabaseServiceKey, { auth: { autoRefreshToken: false, persistSession: false } })
-  : supabase
-
-export async function fetchAllUbicaciones(client: ReturnType<typeof createClient> = supabaseAdmin): Promise<any[]> {
+export async function fetchAllUbicaciones(client: SupabaseClient = supabaseAdmin): Promise<any[]> {
   const PAGE_SIZE = 1000
   const allRows: any[] = []
   let offset = 0
@@ -33,7 +45,7 @@ export async function fetchAllUbicaciones(client: ReturnType<typeof createClient
   return allRows
 }
 
-export async function fetchLatestUbicacionByRep(repartidorId: string, client: ReturnType<typeof createClient> = supabaseAdmin): Promise<any | null> {
+export async function fetchLatestUbicacionByRep(repartidorId: string, client: SupabaseClient = supabaseAdmin): Promise<any | null> {
   const { data: tsData, error: tsError } = await client.from('ubicaciones').select('timestamp').eq('repartidor_id', repartidorId).order('timestamp', { ascending: false }).range(0, 0)
   if (tsError || !tsData || tsData.length === 0) return null
   const latestTs = tsData[0].timestamp
@@ -42,7 +54,7 @@ export async function fetchLatestUbicacionByRep(repartidorId: string, client: Re
   return fullData.find((p: any) => p.repartidor_id === repartidorId) || fullData[0]
 }
 
-export async function fetchUbicacionesByRepAndDate(repartidorId: string, requestedDate: string, client: ReturnType<typeof createClient> = supabaseAdmin): Promise<{ pings: any[]; effectiveDate: string; allDates: string[] }> {
+export async function fetchUbicacionesByRepAndDate(repartidorId: string, requestedDate: string, client: SupabaseClient = supabaseAdmin): Promise<{ pings: any[]; effectiveDate: string; allDates: string[] }> {
   const allTimestamps: string[] = []
   let offset = 0
   let effectiveDate = requestedDate
@@ -72,11 +84,11 @@ export async function fetchUbicacionesByRepAndDate(repartidorId: string, request
     if (error) { console.warn(`fetchUbicacionesByRepAndDate: chunk ${i} error:`, error.message); continue }
     if (data) allRows.push(...data.filter((p: any) => p.repartidor_id === repartidorId))
   }
-  allRows.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+  allRows.sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
   return { pings: allRows, effectiveDate, allDates }
 }
 
-export async function fetchUbicacionesDeHoy(client: ReturnType<typeof createClient> = supabaseAdmin): Promise<any[]> {
+export async function fetchUbicacionesDeHoy(client: SupabaseClient = supabaseAdmin): Promise<any[]> {
   const now = new Date()
   const todayStr = now.toISOString().split('T')[0]
   const PAGE_SIZE = 1000
