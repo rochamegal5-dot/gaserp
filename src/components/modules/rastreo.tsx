@@ -65,7 +65,7 @@ function VivoTab() {
       const d1 = await r1.json(); const d2 = await r2.json(); const d3 = await r3.json()
       setReps(Array.isArray(d1) ? d1 : (d1.repartidores || []))
       setUbis(Array.isArray(d2) ? d2 : (d2.ubicaciones || []))
-      setPuntos(Array.isArray(d3) ? d3 : (d3.puntos || []))
+      setPuntos(Array.isArray(d3) ? d3 : (d3.data || d3.puntos || []))
     } catch { toast({ title: 'Error', description: 'No se pudieron cargar los datos', variant: 'destructive' }) }
     finally { setLoading(false) }
   }, [toast])
@@ -104,21 +104,21 @@ function VivoTab() {
       <div className="space-y-4">
         <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><Navigation className="h-4 w-4" /> Vehículos</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {reps.map(r => { const ubi = ubis.find(u => u.repartidor_id === r.id); const isSim = simulandoId === r.id; return (
-              <div key={r.id} className="flex items-center gap-2 p-2 border rounded-lg">
+            {reps.map(r => { const ubi = ubis.find(u => u.repartidor_id === r.id); const isSim = simulandoId === r.id; const isSelected = selectedRepId === r.id; return (
+              <div key={r.id} onClick={() => setSelectedRepId(isSelected ? null : r.id)} className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${isSelected ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'hover:border-blue-300 hover:bg-blue-50/50'}`}>
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: r.color }} />
                 <div className="flex-1 min-w-0"><p className="text-xs font-bold truncate">{r.nombre}</p><p className="text-[10px] text-gray-500">{ubi ? `${Math.round((ubi.velocidad || 0) * 3.6)} km/h` : 'Sin señal'}</p></div>
                 <Badge className={ubi ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}>{ubi ? 'Online' : 'Offline'}</Badge>
-                <button onClick={() => toggleSimulacion(r.id)} title={isSim ? 'Detener' : 'Simular GPS'} className={`flex items-center justify-center h-6 w-6 rounded-full transition-colors ${isSim ? 'bg-red-500 text-white' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-300'}`}>{isSim ? <span className="text-xs font-black">■</span> : <Satellite className="h-3 w-3" />}</button>
+                <button onClick={e => { e.stopPropagation(); toggleSimulacion(r.id) }} title={isSim ? 'Detener' : 'Simular GPS'} className={`flex items-center justify-center h-6 w-6 rounded-full transition-colors ${isSim ? 'bg-red-500 text-white' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-300'}`}>{isSim ? <span className="text-xs font-black">■</span> : <Satellite className="h-3 w-3" />}</button>
               </div>) })}
           </CardContent>
         </Card>
         <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><Pin className="h-4 w-4 text-emerald-600" /> Puntos de Referencia</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            <Input placeholder="Nombre" value={newPoint.nombre} onChange={e => setNewPoint({ ...newPoint, nombre: e.target.value })} />
-            <div className="grid grid-cols-2 gap-2"><Input placeholder="Lat" value={newPoint.lat} onChange={e => setNewPoint({ ...newPoint, lat: e.target.value })} /><Input placeholder="Lng" value={newPoint.lng} onChange={e => setNewPoint({ ...newPoint, lng: e.target.value })} /></div>
-            <Button size="sm" onClick={handleAddPoint} className="w-full"><Plus className="h-3 w-3 mr-1" /> Agregar</Button>
-            <ScrollArea className="h-32">{puntos.map(p => <div key={p.id} className="flex items-center justify-between text-xs p-1.5 hover:bg-gray-50"><span className="truncate">{p.nombre}</span><button onClick={() => handleDeletePoint(p.id)}><Trash2 className="h-3 w-3 text-red-400" /></button></div>)}</ScrollArea>
+            <Input placeholder="Nombre del punto" value={newPoint.nombre} onChange={e => setNewPoint({ ...newPoint, nombre: e.target.value })} />
+            <div className="grid grid-cols-2 gap-2"><Input placeholder="Latitud" value={newPoint.lat} onChange={e => setNewPoint({ ...newPoint, lat: e.target.value })} /><Input placeholder="Longitud" value={newPoint.lng} onChange={e => setNewPoint({ ...newPoint, lng: e.target.value })} /></div>
+            <Button size="sm" onClick={handleAddPoint} className="w-full"><Plus className="h-3 w-3 mr-1" /> Agregar Punto</Button>
+            <ScrollArea className="h-32">{puntos.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">No hay puntos guardados</p> : puntos.map(p => <div key={p.id} className="flex items-center justify-between text-xs p-1.5 hover:bg-gray-50 rounded"><div className="flex items-center gap-1.5"><Pin className="h-3 w-3 text-emerald-500" /><span className="truncate">{p.nombre}</span><span className="text-gray-400">{p.latitud?.toFixed(4)}, {p.longitud?.toFixed(4)}</span></div><button onClick={() => handleDeletePoint(p.id)}><Trash2 className="h-3 w-3 text-red-400" /></button></div>)}</ScrollArea>
           </CardContent>
         </Card>
       </div>
@@ -144,7 +144,7 @@ function HistorialTab() {
   const [ventasConfirmadas, setVentasConfirmadas] = useState<VentasMap>({})
 
   useEffect(() => { try { const s = localStorage.getItem(VENTAS_LS_KEY); if (s) setVentasConfirmadas(JSON.parse(s)) } catch {} }, [])
-  useEffect(() => { fetch('/api/repartidores').then(r => r.json()).then(d => setReps(Array.isArray(d) ? d : (d.repartidores || []))); fetch('/api/puntos-ruta').then(r => r.json()).then(d => setPuntosReferencia(Array.isArray(d) ? d : (d.puntos || []))) }, [])
+  useEffect(() => { fetch('/api/repartidores').then(r => r.json()).then(d => setReps(Array.isArray(d) ? d : (d.repartidores || []))); fetch('/api/puntos-ruta').then(r => r.json()).then(d => setPuntosReferencia(Array.isArray(d) ? d : (d.data || d.puntos || []))) }, [])
 
   const generarInforme = useCallback(async () => {
     if (!selRep) { toast({ title: 'Seleccioná un repartidor', variant: 'destructive' }); return }
@@ -224,7 +224,7 @@ function HistorialTab() {
 
         <Card className="border-blue-200"><CardHeader className="pb-2">
           <div className="flex flex-wrap items-center justify-between gap-2"><CardTitle className="text-lg flex items-center gap-2"><Clock className="h-5 w-5 text-blue-600" /> Línea de Tiempo {histData.repartidor && <span className="text-blue-600">- {histData.repartidor.nombre}</span>}</CardTitle><span className="text-xs text-gray-500">Mostrando <strong>{timelineFiltrada.length}</strong> de <strong>{timeline.length}</strong></span></div>
-          <p className="text-xs text-gray-500">Hacé <strong>clic en cualquier evento</strong> para ir al mapa. <strong>Cada vez que se detuvo a 0 km/h</strong> podés registrar si hubo venta (✓ / ✗).</p>
+          <p className="text-xs text-gray-500">Hacé <strong>clic en cualquier evento</strong> para ir al mapa. <strong>Cada vez que se detuvo a 0 km/h</strong> podés registrar si hubo venta.</p>
           <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-blue-100"><span className="text-xs font-bold text-gray-600">Filtrar:</span>
             {[{ tipo: 'Detención', color: 'border-orange-300 text-orange-700 bg-orange-50', dot: 'bg-orange-400' }, { tipo: 'Detención en Punto', color: 'border-amber-400 text-amber-800 bg-amber-100', dot: 'bg-amber-500' }, { tipo: 'Pasa por Punto', color: 'border-emerald-300 text-emerald-700 bg-emerald-50', dot: 'bg-emerald-500' }, { tipo: 'Exceso de Velocidad', color: 'border-red-300 text-red-700 bg-red-50', dot: 'bg-red-500' }, { tipo: 'Posición', color: 'border-gray-300 text-gray-600 bg-white', dot: 'bg-gray-400' }].map(f => { const active = eventFilters[f.tipo] !== false; const count = eventCounts[f.tipo] || 0; return <button key={f.tipo} onClick={() => toggleFiltro(f.tipo)} className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold border transition-all ${active ? f.color : 'border-gray-200 text-gray-400 bg-gray-50 opacity-60 line-through'}`}><span className={`w-1.5 h-1.5 rounded-full ${active ? f.dot : 'bg-gray-300'}`} />{f.tipo}<span className="text-[10px] opacity-70">({count})</span></button> })}
             <button onClick={restablecerFiltros} className="ml-auto text-[11px] text-blue-600 hover:underline">Restablecer</button>
