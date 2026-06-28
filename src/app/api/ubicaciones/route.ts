@@ -5,7 +5,6 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    // 1) Obtener repartidores activos
     const { data: reps, error: rErr } = await supabase
       .from('repartidores')
       .select('*')
@@ -20,7 +19,6 @@ export async function GET() {
       return NextResponse.json({ ubicaciones: [] })
     }
 
-    // 2) Obtener la última ubicación de cada repartidor
     const ubicaciones: any[] = []
     for (const rep of reps) {
       const latest = await fetchLatestUbicacionByRep(rep.id)
@@ -29,7 +27,6 @@ export async function GET() {
       }
     }
 
-    // 3) Devolver formato plano que el componente espera
     return NextResponse.json({ ubicaciones })
   } catch (e: any) {
     console.error('[api/ubicaciones GET]', e)
