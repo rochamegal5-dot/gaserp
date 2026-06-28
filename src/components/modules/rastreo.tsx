@@ -53,6 +53,7 @@ function VivoTab() {
   const [ubis, setUbis] = useState<any[]>([])
   const [puntos, setPuntos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedRepId, setSelectedRepId] = useState<string | null>(null)
   const [newPoint, setNewPoint] = useState({ nombre: '', lat: '', lng: '' })
   const [simulandoId, setSimulandoId] = useState<string | null>(null)
   const simIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -80,7 +81,7 @@ function VivoTab() {
   const toggleSimulacion = (repId: string) => {
     if (simulandoId === repId) { setSimulandoId(null); if (simIntervalRef.current) clearInterval(simIntervalRef.current); return }
     const ubi = ubis.find(u => u.repartidor_id === repId)
-    simPosRef.current = { lat: ubi?.latitud || -34.9011, lng: ubi?.longitud || -56.1645, heading: Math.random() * 360 }
+    simPosRef.current = { lat: ubi?.latitud || -34.4833, lng: ubi?.longitud || -54.3317, heading: Math.random() * 360 }
     setSimulandoId(repId)
     simIntervalRef.current = setInterval(async () => {
       if (!simPosRef.current) return
@@ -95,7 +96,11 @@ function VivoTab() {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+    <div className="space-y-4">
+      <Card className="border-blue-200"><CardContent className="p-3 flex flex-wrap items-end gap-2">
+        <div className="flex-1 min-w-[200px]"><Label>Vehículo / Repartidor</Label><Select value={selectedRepId || '__todos__'} onValueChange={v => setSelectedRepId(v === '__todos__' ? null : v)}><SelectTrigger><SelectValue placeholder="Todos los vehículos" /></SelectTrigger><SelectContent><SelectItem value="__todos__">Todos los vehículos</SelectItem>{reps.map(r => <SelectItem key={r.id} value={r.id}>{r.nombre}{r.vehiculo ? ` · ${r.vehiculo}` : ''}</SelectItem>)}</SelectContent></Select></div>
+      </CardContent></Card>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
       <div className="space-y-4">
         <Card><CardHeader><CardTitle className="text-sm flex items-center gap-2"><Navigation className="h-4 w-4" /> Vehículos</CardTitle></CardHeader>
           <CardContent className="space-y-2">
@@ -117,7 +122,8 @@ function VivoTab() {
           </CardContent>
         </Card>
       </div>
-      <div className="lg:col-span-3"><Card className="overflow-hidden border-blue-200"><CardContent className="p-0 relative"><div className="h-[500px]"><VivoMap repartidores={reps} ubicaciones={ubis} puntosReferencia={puntos} /></div></CardContent></Card></div>
+      <div className="lg:col-span-3"><Card className="overflow-hidden border-blue-200"><CardContent className="p-0 relative"><div className="h-[500px]"><VivoMap repartidores={reps} ubicaciones={ubis} puntosReferencia={puntos} selectedRepId={selectedRepId} /></div></CardContent></Card></div>
+    </div>
     </div>
   )
 }
@@ -190,7 +196,6 @@ function HistorialTab() {
           {selEventIdx != null && timeline[selEventIdx] && <div className="absolute top-3 left-3 z-[1000]"><div className="flex items-center gap-2 bg-white/95 px-3 py-1.5 rounded-full shadow-md border border-blue-200"><MapPin className="h-3.5 w-3.5 text-blue-600" /><span className="text-xs font-bold">{timeline[selEventIdx].evento}</span><span className="text-[11px] text-gray-500 font-mono">{timeline[selEventIdx].hora}</span><button onClick={() => setSelEventIdx(null)}><X className="h-3.5 w-3.5" /></button></div></div>}
         </CardContent></Card>
 
-        {/* Resumen ejecutivo */}
         <Card className="border-blue-300 bg-gradient-to-r from-blue-50 to-emerald-50"><CardContent className="p-4"><div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={{ backgroundColor: histData.repartidor?.color || '#3b82f6' }} /><div><p className="text-xs text-gray-500 uppercase font-bold">Repartidor</p><p className="text-base font-black">{histData.repartidor?.nombre || '-'}{histData.repartidor?.vehiculo && <span className="text-xs font-normal text-gray-500 ml-2">· {histData.repartidor.vehiculo}</span>}</p></div></div>
           <div><p className="text-xs text-gray-500 uppercase font-bold">Fecha</p><p className="text-sm font-bold">{histData.fecha}</p></div>
@@ -201,7 +206,6 @@ function HistorialTab() {
           <div><p className="text-xs text-gray-500 uppercase font-bold">Eficiencia</p><p className="text-sm font-bold text-purple-700">{stats.eficiencia_pct}%</p></div>
         </div></CardContent></Card>
 
-        {/* 13 stat cards */}
         {(() => { const cards = [
           { icon: AlertTriangle, label: 'Exceso (>45 km/h)', value: String(stats.exceso_velocidad ?? 0), color: 'text-red-700', bg: 'border-red-200 bg-red-50/50' },
           { icon: Pause, label: 'Paradas (a 0 km/h)', value: String(paradasTotal), color: 'text-orange-700', bg: 'border-orange-200 bg-orange-50/50' },
@@ -218,7 +222,6 @@ function HistorialTab() {
           { icon: Clock, label: 'Inicio / Fin', value: stats.hora_inicio || '--', sub: `→ ${stats.hora_fin || '--'}`, color: 'text-indigo-700', bg: 'border-indigo-200 bg-indigo-50/50' },
         ]; return <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-3">{cards.map((c, i) => { const Icon = c.icon; return <Card key={i} className={c.bg}><CardContent className="p-3 text-center"><div className="flex items-center justify-center gap-1.5 mb-1"><Icon className={`h-3.5 w-3.5 ${c.color}`} /><p className={`text-[10px] font-bold uppercase ${c.color}`}>{c.label}</p></div><p className={`text-xl font-black ${c.color}`}>{c.value}{c.sub && <span className="text-xs font-bold text-gray-400 ml-1">{c.sub}</span>}</p></CardContent></Card> })}</div> })()}
 
-        {/* Timeline con filtros */}
         <Card className="border-blue-200"><CardHeader className="pb-2">
           <div className="flex flex-wrap items-center justify-between gap-2"><CardTitle className="text-lg flex items-center gap-2"><Clock className="h-5 w-5 text-blue-600" /> Línea de Tiempo {histData.repartidor && <span className="text-blue-600">- {histData.repartidor.nombre}</span>}</CardTitle><span className="text-xs text-gray-500">Mostrando <strong>{timelineFiltrada.length}</strong> de <strong>{timeline.length}</strong></span></div>
           <p className="text-xs text-gray-500">Hacé <strong>clic en cualquier evento</strong> para ir al mapa. <strong>Cada vez que se detuvo a 0 km/h</strong> podés registrar si hubo venta (✓ / ✗).</p>
