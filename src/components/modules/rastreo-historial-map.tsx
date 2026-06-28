@@ -19,7 +19,8 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       })
-      const center: [number, number] = trail[0] ? [trail[0].lat, trail[0].lng] : [-34.9011, -56.1645]
+      const ROCHA_CENTER: [number, number] = [-34.4833, -54.3317]
+      const center: [number, number] = trail[0] ? [trail[0].lat, trail[0].lng] : ROCHA_CENTER
       const map = L.map(containerRef.current!).setView(center, 13)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map)
       mapRef.current = map
