@@ -358,6 +358,7 @@ function VivoTab() {
           <CardContent className="p-0 relative">
             <div className="h-[500px]">
               <VivoMap
+                key={"map-" + puntos.length}
                 repartidores={reps}
                 ubicaciones={ubis}
                 puntosReferencia={puntos}
