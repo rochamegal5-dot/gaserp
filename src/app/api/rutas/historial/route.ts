@@ -250,13 +250,28 @@ export async function GET(req: Request) {
 
     const finalTimeline = Array.from(timelineByTs.values()).sort((a, b) => a._ts - b._ts)
 
+    // Raw trail for map rendering (same data the reference uses for drawing)
+    const trail = sorted.map(p => ({
+      lat: Number(p.latitud),
+      lng: Number(p.longitud),
+      timestamp: p.timestamp,
+      velocidad: Number(p.velocidad || 0),
+      en_movimiento: !!p.en_movimiento,
+      precision_gps: Number(p.precision_gps || 0),
+    }))
+
+    // Also include repartidor data for map coloring
+    const { data: repData } = await supabase.from('repartidores').select('*').eq('id', repartidorId).single()
+
     return NextResponse.json({
       data: {
         repartidor_id: repartidorId,
+        repartidor: repData,
         fecha: effectiveDate,
         fechas_disponibles: allDates,
         stats,
         timeline: finalTimeline,
+        trail,
         puntos: sorted.length,
       },
     })
