@@ -5,11 +5,11 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const { data, error } = await supabase.from('puntos_ruta').select('*').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('puntos_ruta').select('*')
     if (error) {
-      console.error('[api/puntos-ruta GET]', error.message)
-      if (error.message.includes('Could not find the table')) {
-        return NextResponse.json({ data: [], migration_required: true })
+      console.error('[api/puntos-ruta GET]', error.message, error.code)
+      if (error.code === '42P01' || error.message?.includes('Could not find the table')) {
+        return NextResponse.json({ data: [] })
       }
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
@@ -23,13 +23,10 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}))
-    const row = {
-      id: crypto.randomUUID(),
+    const row: Record<string, any> = {
       nombre: body.nombre || '',
       latitud: Number(body.latitud ?? 0),
       longitud: Number(body.longitud ?? 0),
-      radio_m: Number(body.radio_m || body.radioM || 50),
-      created_at: new Date().toISOString(),
     }
     const { data, error } = await supabase.from('puntos_ruta').insert(row).select().single()
     if (error) {
