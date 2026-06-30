@@ -24,7 +24,10 @@ export async function POST(req: Request) {
     }
     if (body.altitud !== undefined) row.altitud = Number(body.altitud)
     if (body.precision !== undefined) row.precision = Number(body.precision)
+    if (body.precision_gps !== undefined) row.precision_gps = Number(body.precision_gps)
     if (body.heading !== undefined) row.heading = Number(body.heading)
+    if (body.en_movimiento !== undefined) row.en_movimiento = !!body.en_movimiento
+    if (body.bateria !== undefined) row.bateria = Number(body.bateria)
 
     const { data, error } = await supabase.from('ubicaciones').insert(row).select().single()
     if (error) {
