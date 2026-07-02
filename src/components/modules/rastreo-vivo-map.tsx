@@ -31,6 +31,7 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
   const puntosLayerRef = useRef<any>(null)
   const initializedRef = useRef(false)
   const [mapReady, setMapReady] = useState(false)
+  
 
   const repMap = useCallback(() => {
     const m = new Map<string, RepData>()
