@@ -1,13 +1,13 @@
 'use client'
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import 'leaflet/dist/leaflet.css'
 
-/* ── Pulse animation (same as reference HTML) ── */
 const PULSE_CSS = `
 .gps-marker { border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 8px rgba(0,0,0,0.5); }
 .gps-pulse { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; opacity: 0; animation: gpsPulse 2s ease-out infinite; }
 @keyframes gpsPulse { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(3); opacity: 0; } }
 .leaflet-container { background: #f1f5f9; }
+.punto-ref-marker { background: none !important; border: none !important; }
 `
 
 interface RepData { id: string; nombre: string; color: string; vehiculo?: string | null; latitud: number; longitud: number; velocidad: number; en_movimiento: boolean; lastTimestamp?: string }
@@ -30,8 +30,8 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
   const trailDataRef = useRef<Map<string, [number, number][]>>(new Map())
   const puntosLayerRef = useRef<any>(null)
   const initializedRef = useRef(false)
+  const [mapReady, setMapReady] = useState(false)
 
-  // Build rep map with latest ubicacion
   const repMap = useCallback(() => {
     const m = new Map<string, RepData>()
     for (const r of repartidores) {
@@ -48,7 +48,6 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
     return m
   }, [repartidores, ubicaciones])
 
-  // Create the icon with pulse animation (same as reference)
   const crearIcono = useCallback((color: string, size = 18) => {
     if (typeof window === 'undefined') return null
     const L = (window as any).L
@@ -64,11 +63,41 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
     })
   }, [])
 
-  // Initialize map once
+  const renderPuntos = useCallback((map: any, L: any, puntos: PuntoData[]) => {
+    if (!map || !L) return
+    console.log('[VivoMap] renderPuntos called with', puntos.length, 'puntos')
+    if (puntosLayerRef.current) {
+      puntosLayerRef.current.clearLayers()
+    } else {
+      puntosLayerRef.current = L.layerGroup().addTo(map)
+    }
+    for (const p of puntos) {
+      const lat = Number(p.latitud)
+      const lng = Number(p.longitud)
+      if (!p.nombre || isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) {
+        console.warn('[VivoMap] Punto invalido omitido:', p.nombre, lat, lng)
+        continue
+      }
+      const charWidth = 7
+      const padding = 32
+      const emojiWidth = 18
+      const textW = p.nombre.length * charWidth
+      const totalW = textW + padding + emojiWidth
+      const h = 28
+      const marker = L.marker([lat, lng], {
+        icon: L.divIcon({
+          className: 'punto-ref-marker',
+          html: `<div style="display:flex;align-items:center;gap:4px;background:#1e40af;color:#fff;padding:3px 10px 3px 6px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);line-height:1.3;cursor:pointer;"><span style="font-size:13px;">\uD83D\uDCCD</span><span>${p.nombre}</span></div>`,
+          iconSize: [totalW, h],
+          iconAnchor: [10, h],
+        }),
+      }).addTo(puntosLayerRef.current!)
+      console.log('[VivoMap] Added punto marker:', p.nombre, 'at', lat, lng)
+    }
+  }, [])
+
   useEffect(() => {
     if (!containerRef.current || initializedRef.current) return
-
-    // Inject pulse CSS
     if (typeof document !== 'undefined') {
       const styleId = 'gps-pulse-css'
       if (!document.getElementById(styleId)) {
@@ -78,91 +107,61 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
         document.head.appendChild(style)
       }
     }
-
     import('leaflet').then((LModule) => {
       const L = LModule.default
-      ;(window as any).L = L // expose globally for this module
-
+      ;(window as any).L = L
       delete (L.Icon.Default.prototype as any)._getIconUrl
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       })
-
       const ROCHA_CENTER: [number, number] = [-34.9011, -56.1645]
       const map = L.map(containerRef.current!, { zoomControl: true }).setView(ROCHA_CENTER, 14)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap',
       }).addTo(map)
-
-      // Click on map to get coordinates (same as reference)
-      map.on('click', (e: any) => {
-        onMapClick?.(e.latlng.lat, e.latlng.lng)
-      })
-
+      map.on('click', (e: any) => { onMapClick?.(e.latlng.lat, e.latlng.lng) })
       mapRef.current = map
       initializedRef.current = true
-
-      // Fit bounds after initial markers render
+      setMapReady(true)
       setTimeout(() => map.invalidateSize(), 200)
     })
-
     return () => {
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
         initializedRef.current = false
+        setMapReady(false)
         markersRef.current.clear()
         trailsRef.current.clear()
         trailDataRef.current.clear()
         puntosLayerRef.current = null
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Update puntos de ruta layer
   useEffect(() => {
+    if (!mapReady) return
     const map = mapRef.current
     if (!map) return
     import('leaflet').then((LModule) => {
       const L = LModule.default
-      if (puntosLayerRef.current) {
-        puntosLayerRef.current.clearLayers()
-      } else {
-        puntosLayerRef.current = L.layerGroup().addTo(map)
-      }
-      for (const p of puntosReferencia) {
-        L.marker([p.latitud, p.longitud], {
-          icon: L.divIcon({
-            className: '',
-            html: `<div style="background:#1e40af; color:white; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:bold; white-space:nowrap; border:2px solid white; box-shadow:0 2px 5px rgba(0,0,0,0.3);">\uD83D\uDCCD ${p.nombre}</div>`,
-            iconSize: [120, 30],
-            iconAnchor: [15, 30],
-          }),
-        }).addTo(puntosLayerRef.current!)
-      }
+      renderPuntos(map, L, puntosReferencia)
     })
-  }, [puntosReferencia])
+  }, [puntosReferencia, mapReady, renderPuntos])
 
-  // Main render: create/update markers, trails, and handle selection
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
     const reps = repMap()
     const L = (window as any).L
     if (!L) return
-
     const activeIds = new Set<string>()
-
     reps.forEach((rep, id) => {
       activeIds.add(id)
-
-      // Build trail data
       const existingTrail = trailDataRef.current.get(id) || []
       const lastPoint: [number, number] = [rep.latitud, rep.longitud]
-      // Only add if position changed
       if (existingTrail.length === 0 ||
           (existingTrail[existingTrail.length - 1][0] !== lastPoint[0] ||
            existingTrail[existingTrail.length - 1][1] !== lastPoint[1])) {
@@ -170,43 +169,26 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
         if (existingTrail.length > 100) existingTrail.shift()
       }
       trailDataRef.current.set(id, existingTrail)
-
       const icon = crearIcono(rep.color)
       if (!icon) return
-
       const existingMarker = markersRef.current.get(id)
-
       if (existingMarker) {
-        // Update existing marker position (efficient, same as reference)
         existingMarker.setLatLng([rep.latitud, rep.longitud])
         existingMarker.setPopupContent(
           `<b>${rep.nombre}</b><br>Velocidad: ${(rep.velocidad * 3.6).toFixed(0)} km/h${rep.vehiculo ? '<br>Veh\u00edculo: ' + rep.vehiculo : ''}`
         )
       } else {
-        // Create new marker
         const marker = L.marker([rep.latitud, rep.longitud], { icon }).addTo(map)
         marker.bindPopup(
           `<b>${rep.nombre}</b><br>Velocidad: ${(rep.velocidad * 3.6).toFixed(0)} km/h${rep.vehiculo ? '<br>Veh\u00edculo: ' + rep.vehiculo : ''}`
         )
         markersRef.current.set(id, marker)
-
-        // Create trail polyline (same as reference, commented out in ref but we enable it)
-        const trail = L.polyline(existingTrail, {
-          color: rep.color,
-          weight: 4,
-          opacity: 0.6,
-        }).addTo(map)
+        const trail = L.polyline(existingTrail, { color: rep.color, weight: 4, opacity: 0.6 }).addTo(map)
         trailsRef.current.set(id, trail)
       }
-
-      // Update trail line
       const trail = trailsRef.current.get(id)
-      if (trail) {
-        trail.setLatLngs(existingTrail)
-      }
+      if (trail) { trail.setLatLngs(existingTrail) }
     })
-
-    // Remove markers for deleted reps
     markersRef.current.forEach((marker, id) => {
       if (!activeIds.has(id)) {
         map.removeLayer(marker)
@@ -216,8 +198,6 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
         trailDataRef.current.delete(id)
       }
     })
-
-    // Auto-center: if a rep is selected, pan to them (same as reference)
     if (selectedRepId) {
       const selRep = reps.get(selectedRepId)
       if (selRep) {
@@ -226,7 +206,6 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
         onSpeedUpdate?.(selectedRepId, selRep.velocidad * 3.6)
       }
     } else {
-      // Fit bounds to show all markers (same as reference)
       if (markersRef.current.size > 0) {
         const group = L.featureGroup(Array.from(markersRef.current.values()))
         map.fitBounds(group.getBounds().pad(0.2))
