@@ -280,15 +280,19 @@ function VivoTab() {
                 onMapClick={handleMapClick}
                 onSpeedUpdate={handleSpeedUpdate}
               />
-            </div>
-            {/* Speed panel overlay (same as reference) */}
-            <div className="absolute top-4 right-4 z-10">
-              <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-md text-center">
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Velocidad</p>
-                <p className="text-3xl font-black text-blue-700 tabular-nums">{Math.round(speedKmh)}</p>
-                <p className="text-xs text-gray-500">km/h</p>
+                          </div>
+            {/* Puntos de referencia indicator */}
+            <div className="absolute bottom-4 left-4 z-10">
+              <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-md flex items-center gap-2">
+                <Pin className="h-3.5 w-3.5 text-blue-600" />
+                <span className="text-xs font-semibold text-gray-700">Puntos: {puntos.length}</span>
+                {puntos.length === 0 && !loading && (
+                  <span className="text-[10px] text-amber-600 font-medium">(verificar tabla)</span>
+                )}
               </div>
             </div>
+            {/* Speed panel overlay (same as reference) */}
+          
           </CardContent>
         </Card>
       </div>
