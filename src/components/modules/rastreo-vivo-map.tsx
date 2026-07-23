@@ -195,29 +195,23 @@ useEffect(() => {
 
     for (const p of puntosReferencia) {
 
-      const punto = L.marker(
-        [p.latitud, p.longitud],
-        {
-          icon: L.icon({
-            iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-            shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-            iconSize: [25, 41],
-            iconAnchor: [12, 41]
-          })
-        }
-      ).addTo(puntosLayerRef.current!)
+const punto = L.marker(
+  [p.latitud, p.longitud],
+  {
+    icon: L.divIcon({
+      className: "",
+      html: `
+        <div class="punto-label">
+          📍 ${p.nombre}
+        </div>
+      `,
+      iconSize: [140, 26],
+      iconAnchor: [10, 13]
+    })
+  }
+).addTo(puntosLayerRef.current!)
 
-      punto.bindTooltip(p.nombre, {
-        permanent: true,
-        direction: "right",
-        offset: [15, 0],
-        className: "punto-tooltip"
-      })
-    }
-
-  })
-
-}, [puntosReferencia])
+     
 
 
   // Main render: create/update markers, trails, and handle selection
