@@ -47,6 +47,76 @@ const PULSE_CSS = `
     box-shadow:0 2px 8px rgba(0,0,0,.25);
 }
 
+.referencia-icono{
+    background:transparent;
+    border:none;
+}
+
+.referencia-gastrack{
+
+    display:flex;
+    align-items:center;
+    gap:6px;
+
+    background:#1f4fbf;
+
+    color:white;
+
+    padding:4px 10px;
+
+    border-radius:4px;
+
+    border:1px solid #2d63d8;
+
+    box-shadow:
+        0 2px 5px rgba(0,0,0,.35);
+
+    white-space:nowrap;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    line-height:1;
+}
+
+.referencia-texto{
+    color:white;
+}
+
+.referencia-pin{
+
+    width:8px;
+    height:8px;
+
+    background:#ff4040;
+
+    border-radius:50%;
+
+    position:relative;
+
+    display:inline-block;
+}
+
+.referencia-pin::after{
+
+    content:"";
+
+    position:absolute;
+
+    left:2px;
+
+    top:6px;
+
+    width:4px;
+
+    height:6px;
+
+    background:#ff4040;
+
+    clip-path:polygon(50% 100%,0 0,100% 0);
+}
+
 
 .punto-tooltip{
   background: rgba(255,255,255,.95);
@@ -195,23 +265,24 @@ useEffect(() => {
 
     for (const p of puntosReferencia) {
 
+
 const punto = L.marker(
   [p.latitud, p.longitud],
   {
     icon: L.divIcon({
-      className: "",
+      className: "referencia-icono",
       html: `
-        <div class="punto-label">
-          📍 ${p.nombre}
+        <div class="referencia-gastrack">
+          <span class="referencia-pin"></span>
+          <span class="referencia-texto">${p.nombre}</span>
         </div>
       `,
-      iconSize: [140, 26],
-      iconAnchor: [10, 13]
+      iconSize: [10, 10],
+      iconAnchor: [5, 5]
     })
   }
 ).addTo(puntosLayerRef.current!)
 
-     
 
 
   // Main render: create/update markers, trails, and handle selection
