@@ -168,13 +168,16 @@ export default function Home() {
       minute: '2-digit',
     }).format(now)
   }, [now])
-
+  
   function selectModule(k: ModuleKey) {
+    if (k === 'rastreo') {
+      window.open('/rastreo', '_blank')
+      return
+    }
     setActiveModule(k)
     setMobileOpen(false)
   }
-
-  return (
+   return (
     <div className="min-h-screen-flex bg-muted/20">
       {/* Mobile top bar */}
       <header className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b bg-background px-4 py-3 shadow-sm">
