@@ -231,9 +231,11 @@ export default function VivoMap({
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       })
-
       const ROCHA_CENTER: [number, number] = [-34.9011, -56.1645]
-      const map = L.map(containerRef.current!, { zoomControl: true }).setView(ROCHA_CENTER, 13)
+      // zoomControl: false para mover los botones a la esquina inferior derecha
+      const map = L.map(containerRef.current!, { zoomControl: false }).setView(ROCHA_CENTER, 13)
+      // Botones de zoom en la esquina inferior derecha (estilo Google Maps)
+      L.control.zoom({ position: 'bottomright' }).addTo(map)
       L.tileLayer(
         'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
         { attribution: '&copy; OpenStreetMap & CARTO' }
