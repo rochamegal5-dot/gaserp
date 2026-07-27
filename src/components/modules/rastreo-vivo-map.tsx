@@ -156,17 +156,19 @@ interface Props {
   onPuntoClick?: (punto: PuntoData) => void
   onSpeedUpdate?: (repId: string, speedKmh: number) => void
 }
+ export default function VivoMap({ 
+ repartidores,
+ ubicaciones,
+ puntosReferencia,
+ selectedRepId,
+ siguiendo = false,           // ← NUEVO
+ previewPoint,
+ onPreviewDrag,
+ onMapClick,
+ onPuntoClick,
+ onUserMapMove,               // ← NUEVO
+ onSpeedUpdate,
 
-export default function VivoMap({
-  repartidores,
-  ubicaciones,
-  puntosReferencia,
-  selectedRepId,
-  previewPoint,
-  onPreviewDrag,
-  onMapClick,
-  onPuntoClick,
-  onSpeedUpdate,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
@@ -276,6 +278,12 @@ export default function VivoMap({
         onMapClick?.(e.latlng.lat, e.latlng.lng)
       })
 
+      // Detectar cuando el usuario arrastra el mapa manualmente
+      // para pausar el seguimiento automático
+      map.on('dragstart', () => {
+        onUserMapMove?.()
+      })
+     
       mapRef.current = map
       initializedRef.current = true
 
@@ -481,21 +489,25 @@ export default function VivoMap({
       }
     })
 
-    // Auto-centrar
+    // Auto-centrar / Seguir
     if (selectedRepId) {
       const selRep = reps.get(selectedRepId)
       if (selRep) {
-        map.panTo([selRep.latitud, selRep.longitud], { animate: true, duration: 0.5 })
+        // Si está en modo seguimiento, centrar el mapa en cada update
+        if (siguiendo) {
+          map.panTo([selRep.latitud, selRep.longitud], { animate: true, duration: 0.5 })
+        }
         markersRef.current.get(selectedRepId)?.openPopup()
         onSpeedUpdate?.(selectedRepId, selRep.velocidad * 3.6)
       }
     } else if (markersRef.current.size > 0) {
+   
       const bounds = L.featureGroup(Array.from(markersRef.current.values())).getBounds()
       if (!map.getBounds().contains(bounds)) {
         map.fitBounds(bounds.pad(0.2))
       }
     }
-  }, [repartidores, ubicaciones, selectedRepId, repMap, crearIcono, onSpeedUpdate])
+  }, [repartidores, ubicaciones, selectedRepId, siguiendo, repMap, crearIcono, onSpeedUpdate])
 
   return <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
 }
