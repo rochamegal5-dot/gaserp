@@ -2,15 +2,15 @@
 import { useEffect, useRef, useCallback } from 'react'
 import 'leaflet/dist/leaflet.css'
 
-/* ── Pulse animation (same as reference HTML) ── */
-
-const PULSE_CSS = `
+/* ───────────────────────────────────────────────────────────────
+   CSS — Pulso GPS + Pin tipo Google Maps (gota invertida)
+   ─────────────────────────────────────────────────────────────── */
+const VIVO_CSS = `
 .gps-marker{
   border-radius:50%;
   border:3px solid #fff;
   box-shadow:0 0 8px rgba(0,0,0,.5);
 }
-
 .gps-pulse{
   position:absolute;
   top:50%;
@@ -20,138 +20,130 @@ const PULSE_CSS = `
   opacity:0;
   animation:gpsPulse 2s ease-out infinite;
 }
-
 @keyframes gpsPulse{
-  0%{
-      transform:translate(-50%,-50%) scale(1);
-      opacity:.6;
-  }
-  100%{
-      transform:translate(-50%,-50%) scale(3);
-      opacity:0;
-  }
+  0%   { transform:translate(-50%,-50%) scale(1);   opacity:.6; }
+  100% { transform:translate(-50%,-50%) scale(3);   opacity:0;   }
 }
-
-.leaflet-container{
-    background:#f1f5f9;
-}
+.leaflet-container{ background:#f1f5f9; }
 
 .gps-tooltip{
-    background:#ffffff !important;
-    color:#111827 !important;
-    border:2px solid #16a34a !important;
-    border-radius:8px;
-    font-size:13px;
-    font-weight:700;
-    padding:3px 8px;
-    box-shadow:0 2px 8px rgba(0,0,0,.25);
-}
-
-.referencia-icono{
-    background:transparent;
-    border:none;
-}
-
-.referencia-gastrack{
-
-    display:flex;
-    align-items:center;
-    gap:6px;
-
-    background:#1f4fbf;
-
-    color:white;
-
-    padding:4px 10px;
-
-    border-radius:4px;
-
-    border:1px solid #2d63d8;
-
-    box-shadow:
-        0 2px 5px rgba(0,0,0,.35);
-
-    white-space:nowrap;
-
-    font-size:12px;
-
-    font-weight:600;
-
-    line-height:1;
-}
-
-.referencia-texto{
-    color:white;
-}
-
-.referencia-pin{
-
-    width:8px;
-    height:8px;
-
-    background:#ff4040;
-
-    border-radius:50%;
-
-    position:relative;
-
-    display:inline-block;
-}
-
-.referencia-pin::after{
-
-    content:"";
-
-    position:absolute;
-
-    left:2px;
-
-    top:6px;
-
-    width:4px;
-
-    height:6px;
-
-    background:#ff4040;
-
-    clip-path:polygon(50% 100%,0 0,100% 0);
-}
-
-
-.punto-tooltip{
-  background: rgba(255,255,255,.95);
-  border: 1px solid #2563eb;
-  color:#111827;
+  background:#ffffff !important;
+  color:#111827 !important;
+  border:2px solid #16a34a !important;
+  border-radius:8px;
+  font-size:13px;
   font-weight:700;
-  font-size:12px;
   padding:3px 8px;
-  border-radius:6px;
-  box-shadow:0 2px 6px rgba(0,0,0,.25);
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
 }
 
-.punto-tooltip:before{
-  display:none;
+/* ── Pin tipo Google Maps (gota invertida con sombra) ── */
+.gm-pin{
+  width:28px;
+  height:40px;
+  position:relative;
+  cursor:pointer;
+  transform-origin:bottom center;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));
+  transition:transform .15s ease;
 }
+.gm-pin:hover{ transform:scale(1.12); }
+.gm-pin-body{
+  width:28px;
+  height:28px;
+  border-radius:50% 50% 50% 0;
+  background:#ea4335;
+  transform:rotate(-45deg);
+  border:2px solid #fff;
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.gm-pin-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#fff;
+  transform:rotate(45deg);
+}
+
+/* Pin temporal (cuando se está creando un punto) */
+.gm-pin-temp .gm-pin-body{ background:#1a73e8; }
+.gm-pin-temp .gm-pin-dot{ background:#fff; }
+
+/* Pin del punto seleccionado en la lista */
+.gm-pin-selected .gm-pin-body{ background:#fbbc04; }
+
+/* Tooltip persistente para nombre del punto */
+.punto-label{
+  background:rgba(255,255,255,.97) !important;
+  border:1px solid #ea4335 !important;
+  color:#111827 !important;
+  font-size:11px;
+  font-weight:700;
+  padding:2px 7px;
+  border-radius:5px;
+  box-shadow:0 2px 6px rgba(0,0,0,.2);
+  white-space:nowrap;
+}
+.punto-label:before{ display:none; }
 `
-interface RepData {id: string; nombre: string; color: string; vehiculo?: string | null; latitud: number; longitud: number; velocidad: number; en_movimiento: boolean; lastTimestamp?: string }
-interface PuntoData { id: string; nombre: string; latitud: number; longitud: number }
+
+interface RepData {
+  id: string
+  nombre: string
+  color: string
+  vehiculo?: string | null
+  latitud: number
+  longitud: number
+  velocidad: number
+  en_movimiento: boolean
+  lastTimestamp?: string
+}
+interface PuntoData {
+  id: string
+  nombre: string
+  latitud: number
+  longitud: number
+  radio_m?: number
+  descripcion?: string | null
+}
 
 interface Props {
   repartidores: RepData[]
   ubicaciones: any[]
   puntosReferencia: PuntoData[]
   selectedRepId: string | null
+  /** Coordenadas del punto que el usuario está creando (preview arrastrable) */
+  previewPoint?: { lat: number; lng: number } | null
+  /** Cuando el usuario arrastra el pin temporal */
+  onPreviewDrag?: (lat: number, lng: number) => void
+  /** Click en el mapa para iniciar nuevo punto */
   onMapClick?: (lat: number, lng: number) => void
+  /** Click en un punto guardado (para edición) */
+  onPuntoClick?: (punto: PuntoData) => void
   onSpeedUpdate?: (repId: string, speedKmh: number) => void
 }
 
-export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, selectedRepId, onMapClick, onSpeedUpdate }: Props) {
+export default function VivoMap({
+  repartidores,
+  ubicaciones,
+  puntosReferencia,
+  selectedRepId,
+  previewPoint,
+  onPreviewDrag,
+  onMapClick,
+  onPuntoClick,
+  onSpeedUpdate,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
   const markersRef = useRef<Map<string, any>>(new Map())
   const trailsRef = useRef<Map<string, any>>(new Map())
   const trailDataRef = useRef<Map<string, [number, number][]>>(new Map())
   const puntosLayerRef = useRef<any>(null)
+  const previewMarkerRef = useRef<any>(null)
   const initializedRef = useRef(false)
 
   // Build rep map with latest ubicacion
@@ -171,7 +163,7 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
     return m
   }, [repartidores, ubicaciones])
 
-  // Create the icon with pulse animation (same as reference)
+  // Crear ícono del repartidor con pulso
   const crearIcono = useCallback((color: string, size = 18) => {
     if (typeof window === 'undefined') return null
     const L = (window as any).L
@@ -187,25 +179,51 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
     })
   }, [])
 
-  // Initialize map once
+  // Pin tipo Google Maps para puntos de referencia
+  const crearPinIcon = useCallback((selected = false) => {
+    if (typeof window === 'undefined') return null
+    const L = (window as any).L
+    if (!L) return null
+    return L.divIcon({
+      className: selected ? 'gm-pin gm-pin-selected' : 'gm-pin',
+      html: `<div class="gm-pin-body"><div class="gm-pin-dot"></div></div>`,
+      iconSize: [28, 40],
+      iconAnchor: [14, 38],
+      popupAnchor: [0, -34],
+    })
+  }, [])
 
+  // Pin temporal (preview de nuevo punto)
+  const crearPinTemp = useCallback(() => {
+    if (typeof window === 'undefined') return null
+    const L = (window as any).L
+    if (!L) return null
+    return L.divIcon({
+      className: 'gm-pin gm-pin-temp',
+      html: `<div class="gm-pin-body"><div class="gm-pin-dot"></div></div>`,
+      iconSize: [28, 40],
+      iconAnchor: [14, 38],
+      popupAnchor: [0, -34],
+    })
+  }, [])
+
+  // ═══════════ Inicializar mapa (una sola vez) ═══════════
   useEffect(() => {
     if (!containerRef.current || initializedRef.current) return
 
-    // Inject pulse CSS
     if (typeof document !== 'undefined') {
-      const styleId = 'gps-pulse-css'
+      const styleId = 'vivo-map-css'
       if (!document.getElementById(styleId)) {
         const style = document.createElement('style')
         style.id = styleId
-        style.textContent = PULSE_CSS
+        style.textContent = VIVO_CSS
         document.head.appendChild(style)
       }
     }
 
     import('leaflet').then((LModule) => {
       const L = LModule.default
-      ;(window as any).L = L // expose globally for this module
+      ;(window as any).L = L
 
       delete (L.Icon.Default.prototype as any)._getIconUrl
       L.Icon.Default.mergeOptions({
@@ -217,13 +235,10 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
       const ROCHA_CENTER: [number, number] = [-34.9011, -56.1645]
       const map = L.map(containerRef.current!, { zoomControl: true }).setView(ROCHA_CENTER, 13)
       L.tileLayer(
-  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-  {
-    attribution: '&copy; OpenStreetMap & CARTO'
-  }
-).addTo(map)
+        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        { attribution: '&copy; OpenStreetMap & CARTO' }
+      ).addTo(map)
 
-      // Click on map to get coordinates (same as reference)
       map.on('click', (e: any) => {
         onMapClick?.(e.latlng.lat, e.latlng.lng)
       })
@@ -231,7 +246,6 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
       mapRef.current = map
       initializedRef.current = true
 
-      // Fit bounds after initial markers render
       setTimeout(() => map.invalidateSize(), 200)
     })
 
@@ -244,48 +258,121 @@ export default function VivoMap({ repartidores, ubicaciones, puntosReferencia, s
         trailsRef.current.clear()
         trailDataRef.current.clear()
         puntosLayerRef.current = null
+        previewMarkerRef.current = null
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-// Update puntos de ruta layer
-useEffect(() => {
-  const map = mapRef.current
-  if (!map) return
+  // ═══════════ Renderizar puntos de referencia ═══════════
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
 
-  import('leaflet').then((LModule) => {
-    const L = LModule.default
+    import('leaflet').then((LModule) => {
+      const L = LModule.default
 
-    if (puntosLayerRef.current) {
-      puntosLayerRef.current.clearLayers()
-    } else {
-      puntosLayerRef.current = L.layerGroup().addTo(map)
+      if (puntosLayerRef.current) {
+        puntosLayerRef.current.clearLayers()
+      } else {
+        puntosLayerRef.current = L.layerGroup().addTo(map)
+      }
+
+      for (const p of puntosReferencia) {
+        // Círculo del radio de detección (sutil)
+        if (p.radio_m && p.radio_m > 0) {
+          L.circle([p.latitud, p.longitud], {
+            radius: p.radio_m,
+            color: '#ea4335',
+            weight: 1,
+            opacity: 0.4,
+            fillColor: '#ea4335',
+            fillOpacity: 0.08,
+          }).addTo(puntosLayerRef.current!)
+        }
+
+        // Pin tipo Google Maps
+        const marker = L.marker([p.latitud, p.longitud], {
+          icon: crearPinIcon(false),
+          draggable: false,
+        }).addTo(puntosLayerRef.current!)
+
+        // Label persistente con el nombre
+        marker.bindTooltip(p.nombre, {
+          permanent: true,
+          direction: 'top',
+          offset: [0, -36],
+          className: 'punto-label',
+        })
+
+        // Popup con info detallada
+        const radioTxt = p.radio_m ? `${p.radio_m} m` : '50 m (default)'
+        const descTxt = p.descripcion ? `<br><small>${p.descripcion}</small>` : ''
+        marker.bindPopup(
+          `<div style="font-family:system-ui;min-width:180px;">
+             <div style="font-weight:700;font-size:13px;color:#ea4335;margin-bottom:4px;">${p.nombre}</div>
+             <div style="font-size:11px;color:#555;line-height:1.5;">
+               <div>Lat: <code>${p.latitud.toFixed(6)}</code></div>
+               <div>Lng: <code>${p.longitud.toFixed(6)}</code></div>
+               <div>Radio: <strong>${radioTxt}</strong></div>
+               ${descTxt}
+             </div>
+             <div style="margin-top:6px;font-size:10px;color:#888;border-top:1px solid #eee;padding-top:4px;">
+               Hacé clic en Editar para modificar
+             </div>
+           </div>`
+        )
+
+        marker.on('click', () => {
+          onPuntoClick?.(p)
+        })
+      }
+    })
+  }, [puntosReferencia, crearPinIcon, onPuntoClick])
+
+  // ═══════════ Renderizar marker temporal (preview) ═══════════
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    const L = (window as any).L
+    if (!L) return
+
+    // Remover marker anterior
+    if (previewMarkerRef.current) {
+      map.removeLayer(previewMarkerRef.current)
+      previewMarkerRef.current = null
     }
 
-    for (const p of puntosReferencia) {
+    if (previewPoint) {
+      const marker = L.marker([previewPoint.lat, previewPoint.lng], {
+        icon: crearPinTemp(),
+        draggable: true,
+      }).addTo(map)
 
+      marker.bindTooltip('Nuevo punto — arrastrá para ajustar', {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -36],
+        className: 'punto-label',
+      })
 
-const punto = L.marker(
-  [p.latitud, p.longitud],
-  {
-    icon: L.divIcon({
-      className: "referencia-icono",
-      html: `
-        <div class="referencia-gastrack">
-          <span class="referencia-pin"></span>
-          <span class="referencia-texto">${p.nombre}</span>
-        </div>
-      `,
-      iconSize: [10, 10],
-      iconAnchor: [5, 5]
-    })
-  }
-).addTo(puntosLayerRef.current!)
+      marker.bindPopup(
+        `<div style="font-family:system-ui;">
+           <strong style="color:#1a73e8;">Pin temporal</strong><br>
+           <small>Arrastrá el pin o hacé clic en otro lado del mapa para moverlo.</small>
+         </div>`
+      ).openPopup()
 
+      marker.on('dragend', (e: any) => {
+        const ll = e.target.getLatLng()
+        onPreviewDrag?.(ll.lat, ll.lng)
+      })
 
+      previewMarkerRef.current = marker
+    }
+  }, [previewPoint, crearPinTemp, onPreviewDrag])
 
-  // Main render: create/update markers, trails, and handle selection
+  // ═══════════ Render principal: repartidores + selección ═══════════
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
@@ -298,13 +385,13 @@ const punto = L.marker(
     reps.forEach((rep, id) => {
       activeIds.add(id)
 
-      // Build trail data
       const existingTrail = trailDataRef.current.get(id) || []
       const lastPoint: [number, number] = [rep.latitud, rep.longitud]
-      // Only add if position changed
-      if (existingTrail.length === 0 ||
-          (existingTrail[existingTrail.length - 1][0] !== lastPoint[0] ||
-           existingTrail[existingTrail.length - 1][1] !== lastPoint[1])) {
+      if (
+        existingTrail.length === 0 ||
+        (existingTrail[existingTrail.length - 1][0] !== lastPoint[0] ||
+          existingTrail[existingTrail.length - 1][1] !== lastPoint[1])
+      ) {
         existingTrail.push(lastPoint)
         if (existingTrail.length > 100) existingTrail.shift()
       }
@@ -314,41 +401,30 @@ const punto = L.marker(
       if (!icon) return
 
       const existingMarker = markersRef.current.get(id)
+      if (existingMarker) {
+        existingMarker.setLatLng([rep.latitud, rep.longitud])
+        existingMarker.setIcon(icon)
+        existingMarker.setTooltipContent(rep.nombre)
+        existingMarker.setPopupContent(
+          `<b>${rep.nombre}</b><br>
+           Velocidad: ${(rep.velocidad * 3.6).toFixed(0)} km/h
+           ${rep.vehiculo ? '<br>Vehículo: ' + rep.vehiculo : ''}`
+        )
+      } else {
+        const marker = L.marker([rep.latitud, rep.longitud], { icon }).addTo(map)
+        marker.bindTooltip(rep.nombre, {
+          permanent: true,
+          direction: 'top',
+          offset: [0, -18],
+          className: 'gps-tooltip',
+        })
+        marker.bindPopup(
+          `<b>${rep.nombre}</b><br>
+           Velocidad: ${(rep.velocidad * 3.6).toFixed(0)} km/h
+           ${rep.vehiculo ? '<br>Vehículo: ' + rep.vehiculo : ''}`
+        )
+        markersRef.current.set(id, marker)
 
-if (existingMarker) {
-    existingMarker.setLatLng([rep.latitud, rep.longitud])
-    existingMarker.setIcon(icon)
-
-    existingMarker.setTooltipContent(rep.nombre)
-
-    existingMarker.setPopupContent(
-      `<b>${rep.nombre}</b><br>
-       Velocidad: ${(rep.velocidad * 3.6).toFixed(0)} km/h
-       ${rep.vehiculo ? '<br>Vehículo: ' + rep.vehiculo : ''}`
-    )
-}
-
-      else {
-	const marker = L.marker([rep.latitud, rep.longitud], { icon }).addTo(map)
-
-marker.bindTooltip(rep.nombre,{
-    permanent:true,
-    direction:"top",
-    offset:[0,-18],
-    className:"gps-tooltip"
-})
-
-marker.bindPopup(
-    `<b>${rep.nombre}</b>
-     <br>Velocidad: ${(rep.velocidad * 3.6).toFixed(0)} km/h
-     ${rep.vehiculo ? '<br>Vehículo: '+rep.vehiculo : ''}`
-)
-
-markersRef.current.set(id,marker)
-
-
-        
-        // Create trail polyline (same as reference, commented out in ref but we enable it)
         const trail = L.polyline(existingTrail, {
           color: rep.color,
           weight: 4,
@@ -357,14 +433,11 @@ markersRef.current.set(id,marker)
         trailsRef.current.set(id, trail)
       }
 
-      // Update trail line
       const trail = trailsRef.current.get(id)
-      if (trail) {
-        trail.setLatLngs(existingTrail)
-      }
+      if (trail) trail.setLatLngs(existingTrail)
     })
 
-    // Remove markers for deleted reps
+    // Limpiar markers de reps eliminados
     markersRef.current.forEach((marker, id) => {
       if (!activeIds.has(id)) {
         map.removeLayer(marker)
@@ -375,41 +448,20 @@ markersRef.current.set(id,marker)
       }
     })
 
-    
-
-// Auto-center
-if (selectedRepId) {
-  const selRep = reps.get(selectedRepId)
-
-  if (selRep) {
-    map.panTo([selRep.latitud, selRep.longitud], {
-      animate: true,
-      duration: 0.5
-    })
-
-    markersRef.current.get(selectedRepId)?.openPopup()
-
-    onSpeedUpdate?.(
-      selectedRepId,
-      selRep.velocidad * 3.6
-    )
-  }
-
-} else {
-
-
-if (!selectedRepId && markersRef.current.size > 0) {
-
-    const bounds = L.featureGroup(
-        Array.from(markersRef.current.values())
-    ).getBounds()
-
-    if (!map.getBounds().contains(bounds)) {
+    // Auto-centrar
+    if (selectedRepId) {
+      const selRep = reps.get(selectedRepId)
+      if (selRep) {
+        map.panTo([selRep.latitud, selRep.longitud], { animate: true, duration: 0.5 })
+        markersRef.current.get(selectedRepId)?.openPopup()
+        onSpeedUpdate?.(selectedRepId, selRep.velocidad * 3.6)
+      }
+    } else if (markersRef.current.size > 0) {
+      const bounds = L.featureGroup(Array.from(markersRef.current.values())).getBounds()
+      if (!map.getBounds().contains(bounds)) {
         map.fitBounds(bounds.pad(0.2))
+      }
     }
-
-}
-
   }, [repartidores, ubicaciones, selectedRepId, repMap, crearIcono, onSpeedUpdate])
 
   return <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
