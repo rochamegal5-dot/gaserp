@@ -493,22 +493,18 @@ interface Props {
     if (selectedRepId) {
       const selRep = reps.get(selectedRepId)
       if (selRep) {
-        // Si está en modo seguimiento, centrar el mapa en cada update
-        if (siguiendo) {
-             if (selRep) {
-    // flyTo hace PAN + ZOOM suave (estilo Google Maps)
-    // Math.max asegura que siempre se acerque a calle (16)
-    // pero nunca aleje si ya estás más cerca
-    map.flyTo(
-      [selRep.latitud, selRep.longitud],
-      Math.max(map.getZoom(), 16),
-      { animate: true, duration: 1.2 }
-    )
-        
-        }
+        // SIEMPRE hacer flyTo al seleccionar un repartidor (zoom a calles)
+        // Si está en modo seguimiento, también seguir en cada update
+        map.flyTo(
+          [selRep.latitud, selRep.longitud],
+          Math.max(map.getZoom(), 16),
+          { animate: true, duration: 1.2 }
+        )
         markersRef.current.get(selectedRepId)?.openPopup()
         onSpeedUpdate?.(selectedRepId, selRep.velocidad * 3.6)
       }
+    }
+     
     } else if (markersRef.current.size > 0) {
    
       const bounds = L.featureGroup(Array.from(markersRef.current.values())).getBounds()
