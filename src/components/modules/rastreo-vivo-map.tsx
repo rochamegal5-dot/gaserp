@@ -88,7 +88,38 @@ const VIVO_CSS = `
   white-space:nowrap;
 }
 .punto-label:before{ display:none; }
-`
+
+/* ── Botones de zoom en esquina inferior derecha (estilo Google Maps) ── */
+.leaflet-bottom.leaflet-right{
+  margin-bottom:14px !important;
+  margin-right:14px !important;
+}
+.leaflet-bottom.leaflet-right .leaflet-control-zoom{
+  border:none !important;
+  border-radius:10px !important;
+  overflow:hidden;
+  box-shadow:0 4px 12px rgba(0,0,0,.2) !important;
+  margin:0 !important;
+}
+.leaflet-bottom.leaflet-right .leaflet-control-zoom a{
+  width:38px !important;
+  height:38px !important;
+  line-height:38px !important;
+  font-size:20px !important;
+  font-weight:600 !important;
+  color:#1a73e8 !important;
+  background:#fff !important;
+  border-bottom:1px solid #eee !important;
+  transition:background .15s ease;
+}
+.leaflet-bottom.leaflet-right .leaflet-control-zoom a:hover{
+  background:#f1f5f9 !important;
+  color:#0d47a1 !important;
+}
+.leaflet-bottom.leaflet-right .leaflet-control-zoom a:last-child{
+  border-bottom:none !important;
+}
+
 
 interface RepData {
   id: string
