@@ -495,7 +495,16 @@ interface Props {
       if (selRep) {
         // Si está en modo seguimiento, centrar el mapa en cada update
         if (siguiendo) {
-          map.panTo([selRep.latitud, selRep.longitud], { animate: true, duration: 0.5 })
+             if (selRep) {
+    // flyTo hace PAN + ZOOM suave (estilo Google Maps)
+    // Math.max asegura que siempre se acerque a calle (16)
+    // pero nunca aleje si ya estás más cerca
+    map.flyTo(
+      [selRep.latitud, selRep.longitud],
+      Math.max(map.getZoom(), 16),
+      { animate: true, duration: 1.2 }
+    )
+        
         }
         markersRef.current.get(selectedRepId)?.openPopup()
         onSpeedUpdate?.(selectedRepId, selRep.velocidad * 3.6)
