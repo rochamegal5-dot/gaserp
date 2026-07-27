@@ -2,15 +2,82 @@
 import { useEffect, useRef } from 'react'
 import 'leaflet/dist/leaflet.css'
 
-/* ── Pulse for selected event ── */
 const HIST_CSS = `
 .hist-pulse { animation: histPulse 1.5s ease-out infinite; }
 @keyframes histPulse { 0% { opacity: 0.8; } 50% { opacity: 0.3; } 100% { opacity: 0.8; } }
+
+.gm-pin{
+  width:24px;
+  height:34px;
+  position:relative;
+  cursor:pointer;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.4));
+}
+.gm-pin-body{
+  width:24px;
+  height:24px;
+  border-radius:50% 50% 50% 0;
+  background:#ea4335;
+  transform:rotate(-45deg);
+  border:2px solid #fff;
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.gm-pin-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#fff;
+  transform:rotate(45deg);
+}
+.gm-pin-visited .gm-pin-body{ background:#1e40af; }
+.punto-label-h{
+  background:rgba(255,255,255,.95) !important;
+  border:1px solid #ea4335 !important;
+  color:#111827 !important;
+  font-size:11px;
+  font-weight:700;
+  padding:2px 7px;
+  border-radius:5px;
+  box-shadow:0 2px 5px rgba(0,0,0,.2);
+  white-space:nowrap;
+}
+.punto-label-h:before{ display:none; }
+.punto-label-visited{
+  background:rgba(255,255,255,.95) !important;
+  border:1px solid #1e40af !important;
+  color:#1e40af !important;
+}
 `
 
-interface TrailPoint { lat: number; lng: number; timestamp: string; velocidad?: number; en_movimiento?: boolean; precision_gps?: number }
-interface PuntoData { id: string; nombre: string; latitud: number; longitud: number; radio_m?: number }
-interface TimelineEvent { lat?: number; lng?: number; hora: string; evento: string; detalle: string; punto_nombre?: string; es_detencion?: boolean; stop_id?: string }
+interface TrailPoint {
+  lat: number
+  lng: number
+  timestamp: string
+  velocidad?: number
+  en_movimiento?: boolean
+  precision_gps?: number
+}
+interface PuntoData {
+  id: string
+  nombre: string
+  latitud: number
+  longitud: number
+  radio_m?: number
+  descripcion?: string | null
+}
+interface TimelineEvent {
+  lat?: number
+  lng?: number
+  hora: string
+  evento: string
+  detalle: string
+  punto_nombre?: string
+  es_detencion?: boolean
+  stop_id?: string
+}
 
 interface Props {
   trail: TrailPoint[]
@@ -25,7 +92,7 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
   const selectedMarkerRef = useRef<any>(null)
   const histMarkersRef = useRef<any>(null)
 
-  // Inject CSS
+  // Inyectar CSS
   useEffect(() => {
     if (typeof document !== 'undefined') {
       const id = 'hist-pulse-css'
@@ -38,7 +105,7 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
     }
   }, [])
 
-  // Main map render with incidents (same logic as reference's generarInforme)
+  // Render principal del mapa con incidentes
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -53,7 +120,6 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       })
 
-      // Remove old map
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
@@ -62,15 +128,48 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
       const ROCHA_CENTER: [number, number] = [-34.9011, -56.1645]
       const center: [number, number] = trail[0] ? [trail[0].lat, trail[0].lng] : ROCHA_CENTER
       const map = L.map(containerRef.current!).setView(center, 13)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+      }).addTo(map)
       mapRef.current = map
 
       if (trail.length === 0) {
+        // Dibujar igual los puntos de referencia aunque no haya trail
+        if (puntosReferencia.length > 0) {
+          const histMarkers = L.layerGroup().addTo(map)
+          histMarkersRef.current = histMarkers
+          const boundsCoords: [number, number][] = []
+          for (const pr of puntosReferencia) {
+            L.marker([pr.latitud, pr.longitud], {
+              icon: L.divIcon({
+                className: 'gm-pin',
+                html: `<div class="gm-pin-body"><div class="gm-pin-dot"></div></div>`,
+                iconSize: [24, 34],
+                iconAnchor: [12, 32],
+              }),
+            })
+              .addTo(histMarkers)
+              .bindPopup(
+                `<div style="font-family:system-ui;min-width:160px;">
+                   <div style="font-weight:700;font-size:13px;color:#ea4335;">${pr.nombre}</div>
+                   <div style="font-size:11px;color:#555;margin-top:3px;">
+                     Radio: <strong>${pr.radio_m || 50} m</strong><br>
+                     Lat: <code>${pr.latitud.toFixed(6)}</code><br>
+                     Lng: <code>${pr.longitud.toFixed(6)}</code>
+                   </div>
+                 </div>`
+              )
+            boundsCoords.push([pr.latitud, pr.longitud])
+          }
+          if (boundsCoords.length > 0) {
+            map.fitBounds(L.latLngBounds(boundsCoords).pad(0.15))
+          }
+        }
         setTimeout(() => map.invalidateSize(), 200)
         return
       }
 
-      // 1. Draw trail polyline
+      // 1. Polilínea del recorrido
       const trailCoords: [number, number][] = trail.map(p => [p.lat, p.lng])
       L.polyline(trailCoords, {
         color: repartidor?.color || '#3b82f6',
@@ -78,22 +177,22 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
         opacity: 0.7,
       }).addTo(map)
 
-      // 2. Start / End markers
-      L.marker(trailCoords[0]).addTo(map).bindPopup('<strong>\u25B6 Inicio</strong>')
-      L.marker(trailCoords[trailCoords.length - 1]).addTo(map).bindPopup('<strong>\u25A0 Fin</strong>')
+      // 2. Marcadores de inicio / fin
+      L.marker(trailCoords[0]).addTo(map).bindPopup('<strong>&#9654; Inicio</strong>')
+      L.marker(trailCoords[trailCoords.length - 1]).addTo(map).bindPopup('<strong>&#9632; Fin</strong>')
 
-      // 3. Incident layer (same as reference)
+      // 3. Capa de incidentes
       const histMarkers = L.layerGroup().addTo(map)
       histMarkersRef.current = histMarkers
       const boundsCoords: [number, number][] = [...trailCoords]
 
-      // Time markers every 15 minutes (same as reference)
+      // Marcadores de tiempo cada 15 minutos
       let lastTimeMarker: Date | null = null
       for (const p of trail) {
         const pTime = new Date(p.timestamp)
         if (!lastTimeMarker || (pTime.getTime() - lastTimeMarker.getTime()) >= 15 * 60 * 1000) {
           const timeStr = pTime.toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' })
-          const iconHtml = `<div style="background:white; padding:2px 5px; border-radius:4px; font-size:10px; font-weight:bold; border:1px solid #ccc;">\uD83D\uDD50 ${timeStr}</div>`
+          const iconHtml = `<div style="background:white; padding:2px 5px; border-radius:4px; font-size:10px; font-weight:bold; border:1px solid #ccc;">&#128336; ${timeStr}</div>`
           L.marker([p.lat, p.lng], {
             icon: L.divIcon({ className: '', html: iconHtml, iconAnchor: [0, 20] }),
           }).addTo(histMarkers)
@@ -101,7 +200,7 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
         }
       }
 
-      // Speed excess markers (red circles, >45 km/h) (same as reference)
+      // Excesos de velocidad (>45 km/h)
       for (const p of trail) {
         const speedKmh = (p.velocidad || 0) * 3.6
         if (speedKmh > 45) {
@@ -112,7 +211,7 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
         }
       }
 
-      // Waypoint visit markers (blue, same as reference)
+      // Visitas a waypoints
       const visitedWaypoints = new Set<string>()
       for (const p of trail) {
         if (puntosReferencia.length > 0) {
@@ -121,24 +220,13 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
             if (dist <= (wp.radio_m || 50)) {
               if (!visitedWaypoints.has(wp.id)) {
                 visitedWaypoints.add(wp.id)
-                L.marker([wp.latitud, wp.longitud], {
-                  icon: L.divIcon({
-                    className: '',
-                    html: `<div style="background:#1e40af; color:white; padding:3px 7px; border-radius:6px; font-size:10px; font-weight:bold; white-space:nowrap; border:2px solid white; box-shadow:0 2px 5px rgba(0,0,0,0.3);">\uD83D\uDCCD ${wp.nombre}</div>`,
-                    iconSize: [120, 28],
-                    iconAnchor: [15, 28],
-                  }),
-                }).addTo(histMarkers).bindPopup(`<b>Punto Ruta</b><br>${wp.nombre}`)
-                boundsCoords.push([wp.latitud, wp.longitud])
               }
-            } else {
-              visitedWaypoints.delete(wp.id)
             }
           }
         }
       }
 
-      // Prolonged stop markers (orange circles, >=3 min, same as reference)
+      // Detenciones prolongadas (>=3 min)
       let stopStartTime: Date | null = null
       let stopStartIndex = -1
       for (let i = 0; i < trail.length; i++) {
@@ -156,7 +244,7 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
               const stopLng = trail[stopStartIndex].lng
               let stopPlaceName: string | null = null
               for (const wp of puntosReferencia) {
-                if (map.distance(L.latLng(stopLat, stopLng), L.latLng(wp.latitud, wp.longitud)) <= 50) {
+                if (map.distance(L.latLng(stopLat, stopLng), L.latLng(wp.latitud, wp.longitud)) <= (wp.radio_m || 50)) {
                   stopPlaceName = wp.nombre
                 }
               }
@@ -165,7 +253,7 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
                 : `Detenido ${durationMins.toFixed(1)} min`
               L.circleMarker([stopLat, stopLng], {
                 radius: 8, color: '#ea580c', fillColor: '#fed7aa', fillOpacity: 1,
-              }).addTo(histMarkers).bindPopup(`<b>Detenci\u00f3n Prolongada</b><br>${detDetail}`)
+              }).addTo(histMarkers).bindPopup(`<b>Detención Prolongada</b><br>${detDetail}`)
               boundsCoords.push([stopLat, stopLng])
             }
             stopStartTime = null
@@ -173,17 +261,60 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
         }
       }
 
-      // Puntos de referencia as green circles (even if not visited)
+      // Dibujar TODOS los puntos de referencia (visitados en azul, no visitados en rojo)
       for (const pr of puntosReferencia) {
-        if (!visitedWaypoints.has(pr.id)) {
-          L.circleMarker([pr.latitud, pr.longitud], {
-            radius: 8, color: '#10b981', fillColor: '#10b981', fillOpacity: 0.4,
-          }).addTo(histMarkers).bindPopup(`<b>${pr.nombre}</b>`)
-          boundsCoords.push([pr.latitud, pr.longitud])
+        const visited = visitedWaypoints.has(pr.id)
+        const pinClass = visited ? 'gm-pin gm-pin-visited' : 'gm-pin'
+        const labelClass = visited ? 'punto-label-h punto-label-visited' : 'punto-label-h'
+
+        // Círculo del radio
+        if (pr.radio_m && pr.radio_m > 0) {
+          L.circle([pr.latitud, pr.longitud], {
+            radius: pr.radio_m,
+            color: visited ? '#1e40af' : '#ea4335',
+            weight: 1,
+            opacity: 0.5,
+            fillColor: visited ? '#1e40af' : '#ea4335',
+            fillOpacity: 0.1,
+          }).addTo(histMarkers)
         }
+
+        const m = L.marker([pr.latitud, pr.longitud], {
+          icon: L.divIcon({
+            className: pinClass,
+            html: `<div class="gm-pin-body"><div class="gm-pin-dot"></div></div>`,
+            iconSize: [24, 34],
+            iconAnchor: [12, 32],
+          }),
+        }).addTo(histMarkers)
+
+        m.bindTooltip(pr.nombre, {
+          permanent: true,
+          direction: 'top',
+          offset: [0, -30],
+          className: labelClass,
+        })
+
+        const statusTxt = visited
+          ? '<span style="color:#1e40af;font-weight:700;">&#10003; Visitado</span>'
+          : '<span style="color:#ea4335;font-weight:700;">No visitado</span>'
+
+        m.bindPopup(
+          `<div style="font-family:system-ui;min-width:180px;">
+             <div style="font-weight:700;font-size:13px;color:#ea4335;margin-bottom:4px;">${pr.nombre}</div>
+             <div style="font-size:11px;color:#555;line-height:1.5;">
+               <div>Estado: ${statusTxt}</div>
+               <div>Radio: <strong>${pr.radio_m || 50} m</strong></div>
+               <div>Lat: <code>${pr.latitud.toFixed(6)}</code></div>
+               <div>Lng: <code>${pr.longitud.toFixed(6)}</code></div>
+               ${pr.descripcion ? `<br><small>${pr.descripcion}</small>` : ''}
+             </div>
+           </div>`
+        )
+
+        boundsCoords.push([pr.latitud, pr.longitud])
       }
 
-      // Fit bounds to show everything
       if (boundsCoords.length > 0) {
         map.fitBounds(L.latLngBounds(boundsCoords).pad(0.15))
       }
@@ -198,9 +329,9 @@ export default function HistorialMap({ trail, repartidor, puntosReferencia, sele
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trail])
+  }, [trail, puntosReferencia])
 
-  // Selected event highlight (fly to location)
+  // Highlight del evento seleccionado
   useEffect(() => {
     if (!mapRef.current || !selectedEvent || !selectedEvent.lat) return
     const map = mapRef.current
