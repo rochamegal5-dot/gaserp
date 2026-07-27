@@ -16,7 +16,7 @@ import {
   ChevronLeft, ChevronRight, FileDown, AlertTriangle, Pause, Gauge,
   TrendingUp, Timer, Maximize2, Flag, Percent, PlayCircle, StopCircle,
   Check, X, ShoppingBag, Satellite, Search, Edit3, Save, MapPinned,
-  Eye, EyeOff, Locate,
+  Eye, EyeOff, Locate, Crosshair,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -75,6 +75,7 @@ function VivoTab() {
   const [puntos, setPuntos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedRepId, setSelectedRepId] = useState<string | null>(null)
+  const [siguiendo, setSiguiendo] = useState(false)  // modo seguimiento activo
   const [speedKmh, setSpeedKmh] = useState<number>(0)
   const [liveLog, setLiveLog] = useState<{ hora: string; nombre: string; velocidad: string }[]>([])
   const [simulandoId, setSimulandoId] = useState<string | null>(null)
@@ -229,6 +230,10 @@ function VivoTab() {
     // Cerrar edición si estaba abierta
     setEditandoPunto(null)
   }, [])
+   // Usuario arrastró el mapa → pausar seguimiento
+  const handleUserMapMove = useCallback(() => {
+    if (siguiendo) setSiguiendo(false)
+  }, [siguiendo])
 
   // Arrastrar el preview
   const handlePreviewDrag = useCallback((lat: number, lng: number) => {
@@ -408,7 +413,24 @@ function VivoTab() {
   }, [])
 
   const centrarEn = (repId: string) => {
-    setSelectedRepId(repId === selectedRepId ? null : repId)
+    if (repId === selectedRepId) {
+      // Ya estaba seleccionado → alternar: si está siguiendo, dejar de seguir
+      if (siguiendo) {
+        setSiguiendo(false)
+        setSelectedRepId(null)
+      } else {
+        setSiguiendo(true)
+      }
+    } else {
+      // Nuevo repartidor → seleccionar + activar seguimiento
+      setSelectedRepId(repId)
+      setSiguiendo(true)
+    }
+  }
+
+  // Activar manualmente el modo seguimiento (botón flotante)
+  const activarSeguimiento = () => {
+    if (selectedRepId) setSiguiendo(true)
   }
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
@@ -425,10 +447,12 @@ function VivoTab() {
                 ubicaciones={ubis}
                 puntosReferencia={puntosParaMapa}
                 selectedRepId={selectedRepId}
+                 siguiendo={siguiendo}            // ← nuevo
                 previewPoint={previewPoint}
                 onPreviewDrag={handlePreviewDrag}
                 onMapClick={handleMapClick}
                 onPuntoClick={(p) => iniciarEdicion(p)}
+                onUserMapMove={handleUserMapMove}  // ← nuevo
                 onSpeedUpdate={handleSpeedUpdate}
               />
             </div>
@@ -459,6 +483,24 @@ function VivoTab() {
                 </div>
               </div>
             )}
+            {/* Botón flotante "Seguir" cuando hay repartidor seleccionado pero el seguimiento está pausado */}
+{selectedRepId && !siguiendo && (
+  <button
+    onClick={activarSeguimiento}
+    className="absolute bottom-20 right-4 z-[1000] bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold transition-all hover:scale-105"
+    title="Volver a seguir al repartidor"
+  >
+    <Crosshair className="h-3.5 w-3.5" />
+    Seguir repartidor
+  </button>
+)}
+{/* Indicador de seguimiento activo */}
+{selectedRepId && siguiendo && (
+  <div className="absolute bottom-20 right-4 z-[1000] bg-emerald-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold animate-pulse">
+    <Crosshair className="h-3.5 w-3.5" />
+    Siguiendo
+  </div>
+)}
           </CardContent>
         </Card>
       </div>
