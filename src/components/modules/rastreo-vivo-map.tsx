@@ -500,7 +500,7 @@ export default function VivoMap({
       if (selRep) {
         map.flyTo(
           [selRep.latitud, selRep.longitud],
-          19,
+          17,
           { animate: true, duration: 1 }
         )
         markersRef.current.get(selectedRepId)?.openPopup()
