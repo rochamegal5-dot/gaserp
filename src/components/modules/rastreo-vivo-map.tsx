@@ -271,7 +271,7 @@ export default function VivoMap({
 
       const ROCHA_CENTER: [number, number] = [-34.9011, -56.1645]
       // zoomControl: false para mover los botones a la esquina inferior derecha
-      const map = L.map(containerRef.current!, { zoomControl: false }).setView(ROCHA_CENTER, 13)
+      const map = L.map(containerRef.current!, { zoomControl: false }).setView(ROCHA_CENTER, 17)
       // Botones de zoom en la esquina inferior derecha (estilo Google Maps)
       L.control.zoom({ position: 'bottomright' }).addTo(map)
       L.tileLayer(
@@ -501,8 +501,11 @@ export default function VivoMap({
         // Si está en modo seguimiento, o es la primera vez que se selecciona,
         // centrar el mapa en la posición actual del repartidor
         if (siguiendo) {
-          map.panTo([selRep.latitud, selRep.longitud], { animate: true, duration: 0.5 })
-        }
+            map.flyTo(
+      [selRep.latitud, selRep.longitud],
+      17,
+      { animate: true, duration: 1 }
+    )
         markersRef.current.get(selectedRepId)?.openPopup()
         onSpeedUpdate?.(selectedRepId, selRep.velocidad * 3.6)
       }
