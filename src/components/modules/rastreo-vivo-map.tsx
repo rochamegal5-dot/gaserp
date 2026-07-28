@@ -494,20 +494,19 @@ export default function VivoMap({
       }
     })
 
-         // Auto-centrar / Seguir
+    // Auto-centrar / Seguir
     if (selectedRepId) {
       const selRep = reps.get(selectedRepId)
       if (selRep) {
-        if (siguiendo) {
-          map.flyTo(
-            [selRep.latitud, selRep.longitud],
-            17,
-            { animate: true, duration: 1 }
-          )
-        }
+        map.flyTo(
+          [selRep.latitud, selRep.longitud],
+          19,
+          { animate: true, duration: 1 }
+        )
         markersRef.current.get(selectedRepId)?.openPopup()
         onSpeedUpdate?.(selectedRepId, selRep.velocidad * 3.6)
       }
+   
     } else if (markersRef.current.size > 0) {
       const bounds = L.featureGroup(Array.from(markersRef.current.values())).getBounds()
       if (!map.getBounds().contains(bounds)) {
