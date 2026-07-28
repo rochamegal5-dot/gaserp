@@ -229,8 +229,11 @@ function VivoTab() {
     setNewPoint(prev => ({ ...prev, lat: lat.toFixed(6), lng: lng.toFixed(6) }))
     // Cerrar edición si estaba abierta
     setEditandoPunto(null)
+    // Si el usuario hace clic en el mapa, pausar el seguimiento
+    setSiguiendo(false)
   }, [])
-   // Usuario arrastró el mapa → pausar seguimiento
+
+  // Usuario arrastró el mapa → pausar seguimiento
   const handleUserMapMove = useCallback(() => {
     if (siguiendo) setSiguiendo(false)
   }, [siguiendo])
@@ -447,12 +450,12 @@ function VivoTab() {
                 ubicaciones={ubis}
                 puntosReferencia={puntosParaMapa}
                 selectedRepId={selectedRepId}
-                 siguiendo={siguiendo}            // ← nuevo
+                siguiendo={siguiendo}
                 previewPoint={previewPoint}
                 onPreviewDrag={handlePreviewDrag}
                 onMapClick={handleMapClick}
                 onPuntoClick={(p) => iniciarEdicion(p)}
-                onUserMapMove={handleUserMapMove}  // ← nuevo
+                onUserMapMove={handleUserMapMove}
                 onSpeedUpdate={handleSpeedUpdate}
               />
             </div>
@@ -484,23 +487,23 @@ function VivoTab() {
               </div>
             )}
             {/* Botón flotante "Seguir" cuando hay repartidor seleccionado pero el seguimiento está pausado */}
-{selectedRepId && !siguiendo && (
-  <button
-    onClick={activarSeguimiento}
-    className="absolute bottom-20 right-4 z-[1000] bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold transition-all hover:scale-105"
-    title="Volver a seguir al repartidor"
-  >
-    <Crosshair className="h-3.5 w-3.5" />
-    Seguir repartidor
-  </button>
-)}
-{/* Indicador de seguimiento activo */}
-{selectedRepId && siguiendo && (
-  <div className="absolute bottom-20 right-4 z-[1000] bg-emerald-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold animate-pulse">
-    <Crosshair className="h-3.5 w-3.5" />
-    Siguiendo
-  </div>
-)}
+            {selectedRepId && !siguiendo && (
+              <button
+                onClick={activarSeguimiento}
+                className="absolute bottom-20 right-4 z-[1000] bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold transition-all hover:scale-105"
+                title="Volver a seguir al repartidor"
+              >
+                <Crosshair className="h-3.5 w-3.5" />
+                Seguir repartidor
+              </button>
+            )}
+            {/* Indicador de seguimiento activo */}
+            {selectedRepId && siguiendo && (
+              <div className="absolute bottom-20 right-4 z-[1000] bg-emerald-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold animate-pulse">
+                <Crosshair className="h-3.5 w-3.5" />
+                Siguiendo
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
