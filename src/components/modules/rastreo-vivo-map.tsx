@@ -494,18 +494,17 @@ export default function VivoMap({
       }
     })
 
-    // Auto-centrar / Seguir
+         // Auto-centrar / Seguir
     if (selectedRepId) {
       const selRep = reps.get(selectedRepId)
       if (selRep) {
-        // Si está en modo seguimiento, o es la primera vez que se selecciona,
-        // centrar el mapa en la posición actual del repartidor
         if (siguiendo) {
-            map.flyTo(
-      [selRep.latitud, selRep.longitud],
-      17,
-      { animate: true, duration: 1 }
-    )
+          map.flyTo(
+            [selRep.latitud, selRep.longitud],
+            17,
+            { animate: true, duration: 1 }
+          )
+        }
         markersRef.current.get(selectedRepId)?.openPopup()
         onSpeedUpdate?.(selectedRepId, selRep.velocidad * 3.6)
       }
