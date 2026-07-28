@@ -269,9 +269,9 @@ export default function VivoMap({
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       })
 
-      const ROCHA_CENTER: [number, number] = [-34.9011, -56.1645]
+      const ROCHA_CENTER: [number, number] = [-34.4833, -54.3114]
       // zoomControl: false para mover los botones a la esquina inferior derecha
-      const map = L.map(containerRef.current!, { zoomControl: false }).setView(ROCHA_CENTER, 17)
+      const map = L.map(containerRef.current!, { zoomControl: false }).setView(ROCHA_CENTER, 25)
       // Botones de zoom en la esquina inferior derecha (estilo Google Maps)
       L.control.zoom({ position: 'bottomright' }).addTo(map)
       L.tileLayer(
